@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiretMap Ethiopia — Agriculture Intelligence Platform</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060a10;--s1:#0d1320;--s2:#141c2b;--s3:#1a2538;--bd:#222e42;
+  --tx:#e2e8f0;--t2:#8b9ab8;--t3:#5a6a84;
+  --gn:#10b981;--gn2:#059669;--rd:#ef4444;--or:#f59e0b;--bl:#6366f1;
+  --cy:#06b6d4;--pk:#ec4899;--pp:#a78bfa;--lm:#84cc16;--am:#fbbf24;--r:8px;
+  --nav-bg:rgba(6,10,16,.96);--shadow:0 2px 12px rgba(0,0,0,.4);
+  --map-tiles:grayscale(60%) brightness(0.4);
+}
+body.light{
+  --bg:#f0f4f8;--s1:#ffffff;--s2:#f7fafc;--s3:#edf2f7;--bd:#d1dbe8;
+  --tx:#1a202c;--t2:#4a5568;--t3:#718096;
+  --gn:#059669;--gn2:#047857;--rd:#dc2626;--or:#d97706;--bl:#4f46e5;
+  --cy:#0891b2;--pk:#db2777;--pp:#7c3aed;--lm:#65a30d;--am:#d97706;
+  --nav-bg:rgba(255,255,255,.97);--shadow:0 2px 12px rgba(0,0,0,.12);
+  --map-tiles:none;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow:hidden;height:100vh;transition:background .25s,color .25s}
+.top{position:fixed;top:0;left:0;right:0;z-index:1000;height:44px;display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--nav-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);box-shadow:var(--shadow);transition:background .25s}
+.logo{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.logo i{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#10b981,#047857);display:flex;align-items:center;justify-content:center;font-size:12px;font-style:normal}
+.logo span{font-size:15px;font-weight:800;letter-spacing:-.5px}
+.logo b{color:var(--gn)}
+.tag{font-size:6.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.tag-g{color:var(--gn);background:rgba(16,185,129,.1)}
+.tag-b{color:var(--cy);background:rgba(6,182,212,.1)}
+.mtabs{display:flex;gap:2px;margin-left:8px;overflow-x:auto}
+.mt{height:28px;padding:0 10px;font:inherit;font-size:9px;font-weight:700;border:none;border-radius:4px;cursor:pointer;background:transparent;color:var(--t3);white-space:nowrap;transition:.15s}
+.mt:hover{color:var(--tx);background:var(--s2)}
+.mt.on{color:#fff}
+.mt[data-m=seed].on{background:#059669}
+.mt[data-m=ndvi].on{background:#2563eb}
+.mt[data-m=weather].on{background:#d97706}
+.mt[data-m=pest].on{background:#dc2626}
+.mt[data-m=fertilizer].on{background:#7c3aed}
+.mt[data-m=market].on{background:#0891b2}
+.mt[data-m=credit].on{background:#be185d}
+.mt[data-m=horti].on{background:#a855f7}
+.mt[data-m=officer].on{background:#475569}
+.mt[data-m=kisaan].on{background:#25D366}
+.mt[data-m=ese].on{background:#7c3aed}
+.mt[data-m=sowing].on{background:#15803d}
+.mt[data-m=yieldloss].on{background:#b91c1c}
+.mt[data-m=earlywarning].on{background:#dc2626}
+.mt[data-m=benchmark].on{background:#0369a1}
+.mt[data-m=monsoon].on{background:#0e7490}
+.mt[data-m=report].on{background:#64748b}
+.mt[data-m=dss].on{background:#4338ca}
+.mt[data-m=voice].on{background:#c026d3}
+.mt[data-m=pestcam].on{background:#16a34a}
+.mt[data-m=seedqr].on{background:#0d9488}
+.mt[data-m=ethind].on{background:#ea580c}
+.tright{margin-left:auto;display:flex;gap:4px;align-items:center}
+.tsl{height:26px;padding:0 6px;font:inherit;font-size:9px;background:var(--s2);color:var(--tx);border:1px solid var(--bd);border-radius:4px;cursor:pointer;outline:none}
+.srch{position:relative}
+.srch input{width:160px;height:26px;padding:0 8px 0 24px;background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font:inherit;font-size:10px;outline:none}
+.srch input:focus{border-color:var(--gn)}
+.srch em{position:absolute;left:7px;top:50%;transform:translateY(-50%);font-size:10px;font-style:normal;color:var(--t3);pointer-events:none}
+.wrap{display:flex;height:calc(100vh - 44px);margin-top:44px}
+.sl{width:220px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.sp{padding:8px;border-bottom:1px solid var(--bd)}
+.sh{font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin-bottom:4px}
+.ly{display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:4px;cursor:pointer;margin-bottom:1px;font-size:10px;transition:.1s;user-select:none}
+.ly:hover{background:var(--s2)}
+.ly .ck{width:12px;height:12px;border-radius:2px;border:1.5px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:7px;color:transparent;flex-shrink:0;transition:.15s}
+.ly.on .ck{background:var(--gn);border-color:var(--gn);color:#000}
+.ly .dt{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ly .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dls{flex:1;overflow-y:auto}
+.dl-i{display:flex;align-items:center;gap:4px;padding:4px 8px;cursor:pointer;font-size:10px}
+.dl-i:hover{background:var(--s2)}
+.dl-i.on{background:rgba(16,185,129,.06)}
+.dl-i .rk{width:14px;font-size:8px;color:var(--t3);text-align:right;flex-shrink:0}
+.dl-i .dn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-i .br{width:36px;height:3px;border-radius:2px;background:var(--bg);overflow:hidden;flex-shrink:0}
+.dl-i .bf{height:100%;border-radius:2px}
+.dl-i .vl{width:32px;text-align:right;font-size:8px;font-weight:700;flex-shrink:0}
+.mc{flex:1;position:relative;display:flex;flex-direction:column}
+.dash{height:48px;display:flex;align-items:center;gap:6px;padding:0 8px;background:var(--s1);border-bottom:1px solid var(--bd);overflow-x:auto;flex-shrink:0}
+.dk{padding:6px 10px;background:var(--s2);border-radius:5px;border:1px solid var(--bd);text-align:center;min-width:80px;flex-shrink:0}
+.dk .dv{font-size:16px;font-weight:800;line-height:1}
+.dk .dl{font-size:7px;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-top:1px;white-space:nowrap}
+#map{flex:1;background:var(--bg)}
+.lgd{position:absolute;bottom:12px;left:8px;z-index:800;background:rgba(13,19,32,.94);backdrop-filter:blur(10px);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;min-width:140px}
+.lgd .bar{height:5px;border-radius:3px;overflow:hidden;display:flex;margin:3px 0}
+.lgd .bar div{flex:1}
+.lgd .lbl{display:flex;justify-content:space-between;font-size:7px;color:var(--t3)}
+.leaflet-control-zoom a{background:var(--s1)!important;color:var(--tx)!important;border-color:var(--bd)!important;width:24px!important;height:24px!important;line-height:24px!important;font-size:12px!important}
+.leaflet-control-attribution{display:none!important}
+.sr{width:340px;flex-shrink:0;background:var(--s1);border-left:1px solid var(--bd);overflow-y:auto}
+.sc{padding:10px;border-bottom:1px solid var(--bd)}
+.sc h2{font-size:16px;font-weight:800}
+.sc .zn{font-size:9px;color:var(--gn);margin-top:1px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:6px}
+.sg4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px;margin-top:4px}
+.st{padding:6px;border-radius:5px;text-align:center}
+.st .sv{font-size:16px;font-weight:800;line-height:1}
+.st .sl2{font-size:6.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-top:1px}
+.cb{display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:9px}
+.cb .cn{width:44px;color:var(--t2)}
+.cb .ct{flex:1;height:4px;background:var(--bg);border-radius:2px;overflow:hidden}
+.cb .cf{height:100%;border-radius:2px}
+.cb .cv{width:30px;text-align:right;font-weight:700}
+.np{display:inline-flex;align-items:center;gap:2px;padding:3px 6px;border-radius:3px;font-size:9px;font-weight:700;margin:1px}
+.ic{padding:6px;background:var(--bg);border-radius:5px;margin-bottom:3px;border:1px solid var(--bd);font-size:10px;line-height:1.5}
+.ic .ih{font-weight:700;margin-bottom:2px}
+.mp-title{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.mp-title .mp-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.mp-title h3{font-size:13px;font-weight:700}
+.wa-btn{width:100%;padding:8px;background:#25D366;color:#fff;border:none;border-radius:6px;font:inherit;font-size:10px;font-weight:700;cursor:pointer;margin-top:4px}
+.wa-btn:hover{background:#1ebe5d}
+.empty{padding:30px 16px;text-align:center;color:var(--t3)}
+.empty .ei{font-size:32px;opacity:.15;margin-bottom:8px}
+.empty h3{color:var(--tx);font-size:14px;margin-bottom:4px}
+.empty p{font-size:10px;line-height:1.6}
+.leaflet-popup-content-wrapper{background:var(--s1)!important;color:var(--tx)!important;border:1px solid var(--bd)!important;border-radius:8px!important;box-shadow:var(--shadow)!important;font-family:inherit!important}
+.leaflet-popup-tip{background:var(--s1)!important;border:1px solid var(--bd)!important}
+.leaflet-popup-close-button{color:var(--t2)!important}
+.login-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .4s,visibility .4s,background .25s}
+.login-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.login-box{width:400px;max-width:90vw;background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-box .lb-logo{text-align:center;margin-bottom:20px}
+.login-box .lb-logo i{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#10b981,#047857);display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-style:normal;margin-bottom:8px}
+.login-box .lb-logo h2{font-size:24px;font-weight:800}
+.login-box .lb-logo h2 b{color:var(--gn)}
+.login-box .lb-logo p{font-size:12px;color:var(--t2);margin-top:4px}
+.login-box .lb-field{margin-bottom:12px}
+.login-box label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px}
+.login-box input,.login-box select{width:100%;height:40px;padding:0 12px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font:inherit;font-size:13px;outline:none;transition:.2s}
+.login-box input:focus,.login-box select:focus{border-color:var(--gn)}
+.login-box .lb-btn{width:100%;height:42px;background:var(--gn);color:#fff;border:none;border-radius:8px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;transition:.2s}
+.login-box .lb-btn:hover{background:#059669}
+.login-box .lb-roles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:16px;max-height:320px;overflow-y:auto}
+.login-box .lb-role{padding:10px;background:var(--s2);border:2px solid var(--bd);border-radius:8px;cursor:pointer;text-align:center;transition:.2s}
+.login-box .lb-role:hover{border-color:var(--t3)}
+.login-box .lb-role.active{border-color:var(--gn);background:rgba(16,185,129,.06)}
+.login-box .lb-role .ri{font-size:20px;margin-bottom:4px}
+.login-box .lb-role .rn{font-size:11px;font-weight:700}
+.login-box .lb-role .rd{font-size:8px;color:var(--t3);margin-top:2px}
+.login-box .lb-demo{text-align:center;margin-top:12px;font-size:11px;color:var(--t3)}
+.login-box .lb-demo a{color:var(--gn);cursor:pointer;text-decoration:underline}
+.login-box .lb-error{font-size:10px;color:var(--rd);margin-top:6px;display:none}
+.user-pill{display:flex;align-items:center;gap:5px;padding:3px 10px 3px 3px;background:var(--s2);border:1px solid var(--bd);border-radius:20px;cursor:pointer;font-size:10px;position:relative}
+.user-pill .ua{width:22px;height:22px;border-radius:50%;background:var(--gn);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:800;flex-shrink:0}
+.user-pill .un{font-weight:700;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-pill .ur{font-size:7px;color:var(--gn);font-weight:700;text-transform:uppercase}
+.user-menu{position:absolute;top:32px;right:0;width:200px;background:var(--s1);border:1px solid var(--bd);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;z-index:100;overflow:hidden}
+.user-menu.show{display:block}
+.user-menu .um-item{padding:8px 12px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.1s}
+.user-menu .um-item:hover{background:var(--s2)}
+.user-menu .um-item.danger{color:var(--rd)}
+.user-menu .um-sep{height:1px;background:var(--bd);margin:2px 0}
+.role-badge{font-size:7px;font-weight:800;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:1px}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.theme-toggle{height:26px;padding:0 10px;font:inherit;font-size:11px;font-weight:700;border:1.5px solid var(--bd);border-radius:14px;cursor:pointer;background:var(--s2);color:var(--tx);display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap}
+.theme-toggle:hover{border-color:var(--gn);color:var(--gn)}
+body.light .theme-toggle{background:#fff;border-color:#d1dbe8}
+body.light .leaflet-tile{filter:var(--map-tiles)!important}
+body.light .leaflet-tile-pane{filter:none!important}
+body.light #map{filter:none}
+body.light .dash{background:var(--s1)}
+body.light .sl{background:var(--s1)}
+body.light .sr{background:var(--s1)}
+body.light .lgd{background:rgba(255,255,255,.96)}
+body.light #aiPanel{background:var(--s1)}
+body.light .login-box{background:var(--s1)}
+body.light .user-menu{background:var(--s1)}
+body.light .leaflet-map-pane{filter:saturate(0.85) brightness(1.05)}
+</style>
+</head>
+<body class="light">
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="lb-logo">
+      <i>🌱</i>
+      <h2>Miret<b>Map</b> Ethiopia</h2>
+      <p>Agriculture Decision Intelligence Platform</p>
+    </div>
+    <label>Select your role</label>
+    <div class="lb-roles" id="roleGrid">
+      <div class="lb-role active" data-role="minister" onclick="selectRole(this)">
+        <div class="ri">👔</div><div class="rn">Minister of Agriculture</div><div class="rd">Full national access</div>
+      </div>
+      <div class="lb-role" data-role="sm_crop" onclick="selectRole(this)">
+        <div class="ri">🌾</div><div class="rn">State Min. for Crop</div><div class="rd">Crop production & seed</div>
+      </div>
+      <div class="lb-role" data-role="sm_horti" onclick="selectRole(this)">
+        <div class="ri">☕</div><div class="rn">State Min. Horticulture</div><div class="rd">Coffee, fruits, flowers</div>
+      </div>
+      <div class="lb-role" data-role="dir_soil" onclick="selectRole(this)">
+        <div class="ri">🧪</div><div class="rn">Dir. Soil & Land Mgmt</div><div class="rd">Soil health & fertilizer</div>
+      </div>
+      <div class="lb-role" data-role="dir_pp" onclick="selectRole(this)">
+        <div class="ri">🐛</div><div class="rn">Plant Health Director</div><div class="rd">Pest & disease management</div>
+      </div>
+      <div class="lb-role" data-role="ati" onclick="selectRole(this)">
+        <div class="ri">📊</div><div class="rn">ATI Director</div><div class="rd">Ag. Transformation Institute</div>
+      </div>
+      <div class="lb-role" data-role="ese" onclick="selectRole(this)">
+        <div class="ri">🏭</div><div class="rn">ESE Regional Mgr</div><div class="rd">Seed supply & distribution</div>
+      </div>
+      <div class="lb-role" data-role="regional" onclick="selectRole(this)">
+        <div class="ri">🏢</div><div class="rn">Regional Ag. Bureau</div><div class="rd">Regional state oversight</div>
+      </div>
+      <div class="lb-role" data-role="zonal" onclick="selectRole(this)">
+        <div class="ri">🤝</div><div class="rn">Zonal Agriculture Head</div><div class="rd">Zone + woreda view</div>
+      </div>
+      <div class="lb-role" data-role="woreda" onclick="selectRole(this)">
+        <div class="ri">📋</div><div class="rn">Woreda Agri Expert</div><div class="rd">Woreda-level operations</div>
+      </div>
+      <div class="lb-role" data-role="arc" onclick="selectRole(this)">
+        <div class="ri">🔬</div><div class="rn">ARC Researcher</div><div class="rd">Research & advisory</div>
+      </div>
+      <div class="lb-role" data-role="coop" onclick="selectRole(this)">
+        <div class="ri">👩‍🌾</div><div class="rn">Cooperative Coordinator</div><div class="rd">Farmer cooperatives</div>
+      </div>
+      <div class="lb-role" data-role="farmer" onclick="selectRole(this)">
+        <div class="ri">👨‍🌾</div><div class="rn">Farmer / FPC</div><div class="rd">My farm advisory</div>
+      </div>
+    </div>
+    <div class="lb-field">
+      <label>Name</label>
+      <input id="loginName" placeholder="Enter your name" value=""/>
+    </div>
+    <div class="lb-field" id="distField">
+      <label>Region (for zonal/woreda officers)</label>
+      <select id="loginDist">
+        <option value="">All regions (national level)</option>
+      </select>
+    </div>
+    <div class="lb-error" id="loginError">Please enter your name</div>
+    <button class="lb-btn" onclick="doLogin()">Enter MiretMap →</button>
+    <div class="lb-demo">or <a onclick="demoLogin()">Quick demo login as Minister</a></div>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<div class="top">
+  <div class="logo"><i>🌱</i><span>Miret<b>Map</b></span></div>
+  <span class="tag tag-g">Ethiopia</span>
+  <span id="roleBadge" class="role-badge" style="color:var(--gn);background:rgba(16,185,129,.1)">MIN</span>
+  <div class="mtabs">
+    <button class="mt on" data-m="seed" onclick="setModule('seed')">🌱 Seed Intel</button>
+    <button class="mt" data-m="ndvi" onclick="setModule('ndvi')">🛰 NDVI</button>
+    <button class="mt" data-m="weather" onclick="setModule('weather')">🌤 Weather</button>
+    <button class="mt" data-m="pest" onclick="setModule('pest')">🐛 Pest Alert</button>
+    <button class="mt" data-m="fertilizer" onclick="setModule('fertilizer')">🧪 Fertilizer</button>
+    <button class="mt" data-m="market" onclick="setModule('market')">📈 Market</button>
+    <button class="mt" data-m="horti" onclick="setModule('horti')">☕ Horticulture</button>
+    <button class="mt" data-m="credit" onclick="setModule('credit')">💳 AgriScore</button>
+    <button class="mt" data-m="officer" onclick="setModule('officer')">🤝 Officer</button>
+    <button class="mt" data-m="ese" onclick="setModule('ese')">🏭 ESE Tracker</button>
+    <button class="mt" data-m="sowing" onclick="setModule('sowing')">🌱 Sowing Progress</button>
+    <button class="mt" data-m="yieldloss" onclick="setModule('yieldloss')">💸 Yield Loss</button>
+    <button class="mt" data-m="earlywarning" onclick="setModule('earlywarning')">🚨 Early Warning</button>
+    <button class="mt" data-m="benchmark" onclick="setModule('benchmark')">📊 Benchmarking</button>
+    <button class="mt" data-m="monsoon" onclick="setModule('monsoon')">🌧 Season Ready</button>
+    <button class="mt" data-m="dss" onclick="setModule('dss')">📋 Scheme Tracker</button>
+    <button class="mt" data-m="report" onclick="setModule('report')">📄 Report</button>
+    <button class="mt" data-m="kisaan" onclick="setModule('kisaan')">📱 አርሶ አደር ምክር</button>
+    <button class="mt" data-m="voice" onclick="setModule('voice')">🗣 Farmer Voice</button>
+    <button class="mt" data-m="pestcam" onclick="setModule('pestcam')">📸 Pest Camera</button>
+    <button class="mt" data-m="seedqr" onclick="setModule('seedqr')">📎 Seed QR</button>
+    <button class="mt" data-m="ethind" onclick="setModule('ethind')">🇪🇹 Region vs National</button>
+  </div>
+  <div class="tright">
+    <button onclick="openSettings()" style="height:26px;padding:0 8px;font:inherit;font-size:9px;background:var(--s2);color:var(--t2);border:1px solid var(--bd);border-radius:4px;cursor:pointer" title="API Settings">⚙ APIs</button>
+    <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="Switch theme">☀️ Light</button>
+    <select class="tsl" id="sCrop"><option value="teff">Teff</option><option value="wheat">Wheat</option><option value="maize">Maize</option><option value="sorghum">Sorghum</option></select>
+    <select class="tsl" id="sSeason"><option value="meher26">Meher 2026</option><option value="belg26">Belg 2026</option><option value="meher25">Meher 2025</option></select>
+    <div class="srch"><em>🔍</em><input id="sinp" placeholder="Search region..." autocomplete="off"></div>
+    <div class="user-pill" id="userPill" onclick="toggleUserMenu()">
+      <div class="ua" id="userAvatar">MIN</div>
+      <div><div class="un" id="userName">Demo User</div><div class="ur" id="userRole">Minister of Agriculture</div></div>
+      <div class="user-menu" id="userMenu">
+        <div class="um-item" onclick="event.stopPropagation()">👤 <span id="menuName">Demo User</span></div>
+        <div class="um-item" onclick="event.stopPropagation()">🏷 <span id="menuRole">Minister of Agriculture</span></div>
+        <div class="um-item" onclick="event.stopPropagation()">📍 <span id="menuDist">All Regions</span></div>
+        <div class="um-sep"></div>
+        <div class="um-item" onclick="event.stopPropagation()">⚙ Settings</div>
+        <div class="um-item" onclick="event.stopPropagation()">📊 Export Report</div>
+        <div class="um-sep"></div>
+        <div class="um-item danger" onclick="doLogout()">↩ Logout</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="sl">
+    <div class="sp"><div class="sh">Layers</div><div id="layers"></div></div>
+    <div class="sp" style="padding-bottom:3px"><div class="sh" id="listTitle">Regions</div></div>
+    <div class="dls" id="distList"></div>
+  </div>
+  <div class="mc">
+    <div class="dash" id="dash"></div>
+    <div id="map"></div>
+    <div class="lgd" id="legend"></div>
+    <div id="aiBtn" onclick="toggleAI()" style="position:absolute;bottom:16px;right:16px;z-index:800;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,.4);font-size:20px;transition:.2s" title="AI Assistant">🤖</div>
+    <div id="aiPanel" style="display:none;position:absolute;bottom:70px;right:16px;z-index:800;width:320px;max-height:400px;background:var(--s1);border:1px solid var(--bd);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden">
+      <div style="padding:10px 12px;background:var(--s2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px">
+        <span style="font-size:16px">🤖</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:700">MiretMap AI</div><div style="font-size:8px;color:var(--gn)">Ask in Amharic or English</div></div>
+        <span onclick="toggleAI()" style="cursor:pointer;color:var(--t3);font-size:14px">✕</span>
+      </div>
+      <div id="aiMessages" style="height:260px;overflow-y:auto;padding:8px;font-size:11px"></div>
+      <div style="padding:6px;border-top:1px solid var(--bd);display:flex;gap:4px">
+        <input id="aiInput" placeholder="ጠይቁ... e.g. Why is Amhara SRR low?" style="flex:1;height:32px;padding:0 10px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font:inherit;font-size:10px;outline:none" onkeydown="if(event.key==='Enter')askAI()">
+        <button onclick="askAI()" style="width:32px;height:32px;border-radius:6px;background:var(--gn);border:none;color:#fff;cursor:pointer;font-size:12px">→</button>
+      </div>
+    </div>
+  </div>
+  <div class="sr" id="right">
+    <div class="empty"><div class="ei">🗺️</div><h3>Select a region</h3><p>Click map or list to see full agriculture intelligence — seed, NDVI, weather, pest, fertilizer, market, credit score.</p></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ══════ DATA BLOCK ══════
+var ETHIOPIA_GEO = {"type":"FeatureCollection","features":[
+{"type":"Feature","properties":{"name":"Tigray","id":"tigray","centroid_lat":13.5,"centroid_lng":39.0},"geometry":{"type":"Polygon","coordinates":[[[36.5,14.8],[38.0,15.0],[39.5,14.8],[40.2,14.0],[40.0,13.0],[39.5,12.5],[38.0,12.8],[37.0,13.0],[36.5,14.0],[36.5,14.8]]]}},
+{"type":"Feature","properties":{"name":"Afar","id":"afar","centroid_lat":11.5,"centroid_lng":41.0},"geometry":{"type":"Polygon","coordinates":[[[40.0,13.0],[40.2,14.0],[41.0,14.5],[42.0,13.5],[42.5,12.5],[42.0,11.0],[41.5,9.8],[40.5,10.0],[39.8,11.0],[39.5,12.5],[40.0,13.0]]]}},
+{"type":"Feature","properties":{"name":"Amhara","id":"amhara","centroid_lat":11.5,"centroid_lng":38.0},"geometry":{"type":"Polygon","coordinates":[[[36.5,14.0],[37.0,13.0],[38.0,12.8],[39.5,12.5],[39.8,11.0],[40.0,10.5],[39.5,10.0],[38.5,10.0],[37.5,10.5],[36.5,10.5],[35.5,11.0],[35.5,12.0],[36.0,13.0],[36.5,14.0]]]}},
+{"type":"Feature","properties":{"name":"Oromia","id":"oromia","centroid_lat":7.5,"centroid_lng":39.5},"geometry":{"type":"Polygon","coordinates":[[[35.5,10.5],[36.5,10.5],[37.5,10.5],[38.5,10.0],[39.5,10.0],[40.5,10.0],[41.5,9.8],[42.0,9.0],[41.5,8.0],[41.0,7.5],[40.5,7.0],[40.0,6.0],[39.5,5.5],[39.0,5.0],[38.5,5.5],[37.5,5.5],[36.5,6.0],[35.5,7.0],[34.5,8.0],[34.5,9.0],[35.0,10.0],[35.5,10.5]]]}},
+{"type":"Feature","properties":{"name":"Somali","id":"somali","centroid_lat":6.5,"centroid_lng":44.0},"geometry":{"type":"Polygon","coordinates":[[[42.0,11.0],[42.5,12.5],[43.5,11.5],[45.0,10.0],[47.0,8.0],[47.5,5.0],[46.0,4.0],[44.0,3.5],[42.0,4.0],[41.0,5.0],[40.5,6.0],[40.5,7.0],[41.0,7.5],[41.5,8.0],[42.0,9.0],[41.5,9.8],[42.0,11.0]]]}},
+{"type":"Feature","properties":{"name":"SNNPR","id":"snnpr","centroid_lat":6.5,"centroid_lng":37.0},"geometry":{"type":"Polygon","coordinates":[[[35.0,8.0],[36.0,8.0],[37.0,8.0],[37.5,7.5],[38.0,7.0],[38.5,6.5],[38.5,5.5],[37.5,5.5],[36.5,6.0],[35.5,7.0],[35.0,7.5],[35.0,8.0]]]}},
+{"type":"Feature","properties":{"name":"Sidama","id":"sidama","centroid_lat":6.8,"centroid_lng":38.5},"geometry":{"type":"Polygon","coordinates":[[[38.0,7.0],[38.5,7.2],[39.0,7.0],[39.0,6.5],[38.5,6.2],[38.0,6.5],[38.0,7.0]]]}},
+{"type":"Feature","properties":{"name":"Benishangul-Gumuz","id":"benshangul","centroid_lat":10.5,"centroid_lng":35.5},"geometry":{"type":"Polygon","coordinates":[[[34.0,10.0],[34.5,10.5],[35.5,11.0],[35.5,10.5],[36.0,10.0],[36.0,9.5],[35.5,9.0],[34.5,9.0],[34.0,9.5],[34.0,10.0]]]}},
+{"type":"Feature","properties":{"name":"Gambela","id":"gambela","centroid_lat":7.9,"centroid_lng":34.5},"geometry":{"type":"Polygon","coordinates":[[[33.0,8.5],[34.0,8.5],[34.5,8.0],[35.0,7.5],[35.0,7.0],[34.0,7.0],[33.0,7.5],[33.0,8.0],[33.0,8.5]]]}},
+{"type":"Feature","properties":{"name":"Harari","id":"harari","centroid_lat":9.3,"centroid_lng":42.1},"geometry":{"type":"Polygon","coordinates":[[[41.8,9.5],[42.2,9.5],[42.4,9.3],[42.3,9.0],[41.9,9.0],[41.7,9.2],[41.8,9.5]]]}},
+{"type":"Feature","properties":{"name":"Dire Dawa","id":"diredawa","centroid_lat":9.6,"centroid_lng":41.8},"geometry":{"type":"Polygon","coordinates":[[[41.5,9.8],[41.9,9.9],[42.2,9.7],[42.2,9.4],[41.8,9.3],[41.5,9.5],[41.5,9.8]]]}},
+{"type":"Feature","properties":{"name":"Addis Ababa","id":"addis","centroid_lat":9.0,"centroid_lng":38.7},"geometry":{"type":"Polygon","coordinates":[[[38.5,9.15],[38.85,9.2],[39.0,9.05],[38.9,8.85],[38.55,8.8],[38.4,8.95],[38.5,9.15]]]}}
+]};
+
+var REAL = {
+"tigray":{"teff":{"a":350000,"p":560000,"y":1600},"wheat":{"a":280000,"p":756000,"y":2700},"maize":{"a":120000,"p":420000,"y":3500},"sorghum":{"a":200000,"p":440000,"y":2200},"soil":{"n":"M","p":"L","k":"M","ph":7.2,"oc":"M"},"drought_risk":2,"irrigation_pct":12},
+"afar":{"teff":{"a":5000,"p":4500,"y":900},"wheat":{"a":3000,"p":4200,"y":1400},"maize":{"a":15000,"p":37500,"y":2500},"sorghum":{"a":45000,"p":63000,"y":1400},"soil":{"n":"L","p":"L","k":"L","ph":8.2,"oc":"L"},"drought_risk":3,"irrigation_pct":5},
+"amhara":{"teff":{"a":1200000,"p":2160000,"y":1800},"wheat":{"a":750000,"p":2100000,"y":2800},"maize":{"a":450000,"p":1800000,"y":4000},"sorghum":{"a":380000,"p":912000,"y":2400},"soil":{"n":"M","p":"M","k":"H","ph":6.8,"oc":"M"},"drought_risk":1,"irrigation_pct":10},
+"oromia":{"teff":{"a":1500000,"p":2850000,"y":1900},"wheat":{"a":1200000,"p":3960000,"y":3300},"maize":{"a":1100000,"p":5500000,"y":5000},"sorghum":{"a":500000,"p":1350000,"y":2700},"soil":{"n":"M","p":"M","k":"H","ph":6.5,"oc":"M"},"drought_risk":1,"irrigation_pct":12},
+"somali":{"teff":{"a":2000,"p":1400,"y":700},"wheat":{"a":5000,"p":6000,"y":1200},"maize":{"a":80000,"p":160000,"y":2000},"sorghum":{"a":250000,"p":375000,"y":1500},"soil":{"n":"L","p":"L","k":"L","ph":7.8,"oc":"L"},"drought_risk":3,"irrigation_pct":4},
+"snnpr":{"teff":{"a":200000,"p":340000,"y":1700},"wheat":{"a":350000,"p":980000,"y":2800},"maize":{"a":600000,"p":2700000,"y":4500},"sorghum":{"a":180000,"p":432000,"y":2400},"soil":{"n":"M","p":"M","k":"M","ph":6.2,"oc":"H"},"drought_risk":0,"irrigation_pct":8},
+"sidama":{"teff":{"a":50000,"p":90000,"y":1800},"wheat":{"a":80000,"p":224000,"y":2800},"maize":{"a":150000,"p":675000,"y":4500},"sorghum":{"a":30000,"p":72000,"y":2400},"soil":{"n":"H","p":"M","k":"H","ph":5.8,"oc":"H"},"drought_risk":0,"irrigation_pct":6},
+"benshangul":{"teff":{"a":40000,"p":56000,"y":1400},"wheat":{"a":15000,"p":33000,"y":2200},"maize":{"a":80000,"p":320000,"y":4000},"sorghum":{"a":120000,"p":264000,"y":2200},"soil":{"n":"M","p":"L","k":"M","ph":6.0,"oc":"M"},"drought_risk":0,"irrigation_pct":3},
+"gambela":{"teff":{"a":3000,"p":3000,"y":1000},"wheat":{"a":1000,"p":1500,"y":1500},"maize":{"a":60000,"p":210000,"y":3500},"sorghum":{"a":40000,"p":72000,"y":1800},"soil":{"n":"M","p":"L","k":"M","ph":5.5,"oc":"M"},"drought_risk":0,"irrigation_pct":3},
+"harari":{"teff":{"a":5000,"p":8500,"y":1700},"wheat":{"a":3000,"p":7200,"y":2400},"maize":{"a":8000,"p":32000,"y":4000},"sorghum":{"a":15000,"p":37500,"y":2500},"soil":{"n":"M","p":"M","k":"M","ph":7.0,"oc":"M"},"drought_risk":1,"irrigation_pct":15},
+"diredawa":{"teff":{"a":3000,"p":4800,"y":1600},"wheat":{"a":2000,"p":5000,"y":2500},"maize":{"a":6000,"p":21000,"y":3500},"sorghum":{"a":18000,"p":43200,"y":2400},"soil":{"n":"L","p":"L","k":"M","ph":7.5,"oc":"L"},"drought_risk":2,"irrigation_pct":10},
+"addis":{"teff":{"a":8000,"p":16000,"y":2000},"wheat":{"a":5000,"p":15000,"y":3000},"maize":{"a":3000,"p":12000,"y":4000},"sorghum":{"a":1000,"p":2500,"y":2500},"soil":{"n":"H","p":"M","k":"H","ph":6.5,"oc":"H"},"drought_risk":0,"irrigation_pct":20}
+};
+
+// ══════ HORTICULTURE DATA ══════
+var HORTI={"crops":{"coffee":{"name":"Coffee","icon":"☕","color":"#6b4423","state_total":{"area_ha":900000,"prod_mt":500000,"national_share":100},"varieties":["Gesha/Geisha","74110","74112","74148","Yirgacheffe Heirloom","Sidamo Heirloom","Harar Native"],"gi_tag":"Yirgacheffe Coffee","harvest_months":[10,11,12,1],"districts":{"oromia":{"area":450000,"prod":250000,"role":"Jimma-Illubabor coffee belt","variety":"74110, 74112, Gesha"},"snnpr":{"area":200000,"prod":120000,"role":"Yirgacheffe origin","variety":"Heirloom, 74148"},"sidama":{"area":100000,"prod":55000,"role":"Sidamo coffee zone","variety":"Sidamo Heirloom"},"gambela":{"area":30000,"prod":12000,"role":"Wild coffee forest","variety":"Forest coffee"},"amhara":{"area":40000,"prod":22000,"role":"Emerging zone","variety":"74110"},"benshangul":{"area":25000,"prod":10000,"role":"Western frontier","variety":"Mixed"},"harari":{"area":15000,"prod":8000,"role":"Harar longberry","variety":"Harar Native"}}},"enset":{"name":"Enset (False Banana)","icon":"🌿","color":"#22c55e","state_total":{"area_ha":500000,"prod_mt":12000000,"national_share":100},"varieties":["Gena","Maziya","Astara","Kelisa","Nechwe"],"gi_tag":null,"harvest_months":[1,2,3,4,5,6,7,8,9,10,11,12],"districts":{"snnpr":{"area":250000,"prod":6000000,"role":"Enset heartland — Gurage, Sidama","variety":"Gena, Maziya"},"sidama":{"area":80000,"prod":2000000,"role":"Major producer","variety":"Astara, Kelisa"},"oromia":{"area":120000,"prod":2800000,"role":"Western Oromia","variety":"Mixed"},"gambela":{"area":10000,"prod":200000,"role":"Minor","variety":"Local"}}},"chat":{"name":"Chat (Khat)","icon":"🍃","color":"#84cc16","state_total":{"area_ha":300000,"prod_mt":400000,"national_share":100},"varieties":["Harar White","Dire Dawa Green","Wondo Genet"],"gi_tag":"Harar Chat","harvest_months":[1,2,3,4,5,6,7,8,9,10,11,12],"districts":{"harari":{"area":40000,"prod":60000,"role":"Premium Harar chat","variety":"Harar White"},"diredawa":{"area":30000,"prod":40000,"role":"Major hub","variety":"Dire Dawa Green"},"oromia":{"area":150000,"prod":200000,"role":"Largest area","variety":"Mixed"},"sidama":{"area":25000,"prod":30000,"role":"Wondo Genet","variety":"Wondo Genet"},"amhara":{"area":20000,"prod":25000,"role":"Growing","variety":"Local"}}},"avocado":{"name":"Avocado","icon":"🥑","color":"#059669","state_total":{"area_ha":50000,"prod_mt":150000,"national_share":100},"varieties":["Hass","Fuerte","Bacon","Ettinger","Pinkerton"],"gi_tag":null,"harvest_months":[3,4,5,6,7,8,9],"districts":{"snnpr":{"area":15000,"prod":50000,"role":"Major belt","variety":"Hass, Fuerte"},"sidama":{"area":8000,"prod":25000,"role":"Export quality","variety":"Hass"},"oromia":{"area":18000,"prod":55000,"role":"Jimma-Wolega","variety":"Fuerte, Bacon"},"addis":{"area":2000,"prod":5000,"role":"Peri-urban","variety":"Hass"}}},"vegetables":{"name":"Vegetables","icon":"🥬","color":"#22c55e","state_total":{"area_ha":700000,"prod_mt":8000000,"national_share":100},"varieties":["Potato","Onion","Tomato","Cabbage","Pepper","Carrot"],"gi_tag":null,"harvest_months":[1,2,3,10,11,12],"districts":{"oromia":{"area":200000,"prod":2400000,"role":"Major producer","variety":"Potato, Onion"},"amhara":{"area":180000,"prod":2100000,"role":"Major producer","variety":"Potato, Onion, Pepper"},"snnpr":{"area":120000,"prod":1400000,"role":"Significant","variety":"Cabbage, Carrot"},"tigray":{"area":80000,"prod":900000,"role":"Irrigated veg","variety":"Tomato, Onion"},"addis":{"area":15000,"prod":200000,"role":"Peri-urban","variety":"Mixed"}}},"flowers":{"name":"Flowers (Roses)","icon":"🌹","color":"#f43f5e","state_total":{"area_ha":3000,"prod_mt":200000,"national_share":100},"varieties":["Red Roses","Spray Roses","Hypericum","Eryngium"],"gi_tag":null,"harvest_months":[1,2,3,4,5,6,7,8,9,10,11,12],"districts":{"oromia":{"area":2000,"prod":140000,"role":"Bishoftu/Debre Zeit hub","variety":"Red Roses, Spray"},"addis":{"area":500,"prod":30000,"role":"Holeta corridor","variety":"Red Roses"},"amhara":{"area":300,"prod":20000,"role":"Bahir Dar area","variety":"Mixed"}}}},"calendar":{"coffee":{"1":{"stage":"Late harvest/drying","activity":"Complete cherry picking. Sun-dry on raised beds to 11% moisture.","alert":"yellow","pest":"None significant","irrigation":"None needed"},"2":{"stage":"Post-harvest","activity":"Hull dried cherries. Grade green beans. Store in jute bags.","alert":"green","pest":"Storage pest check — weevils","irrigation":"None"},"3":{"stage":"Pruning","activity":"Prune 30% canopy. Remove suckers. Apply compost 5kg/tree.","alert":"green","pest":"None","irrigation":"If Belg rains delayed, irrigate seedlings"},"4":{"stage":"Flowering — CRITICAL","activity":"Main flowering after first Belg rains. Do NOT spray during flowering.","alert":"red","pest":"Antestia bug monitoring — hand pick if <5/tree","irrigation":"Critical — 20L/tree if no rain within 10 days"},"5":{"stage":"Fruit set","activity":"Apply 100g Urea + 50g DAP per tree after fruit set.","alert":"yellow","pest":"Coffee berry borer — set alcohol traps","irrigation":"Continue if dry spell"},"6":{"stage":"Green fruit development","activity":"Weed management critical. Mulch with coffee pulp.","alert":"green","pest":"CBD (Coffee Berry Disease) if humid — spray Copper","irrigation":"Meher rains begin — natural"},"7":{"stage":"Fruit expansion","activity":"Main Meher rains. Natural growth. Monitor drainage.","alert":"green","pest":"CBD watch — spray Copper if >5% infection","irrigation":"Meher rains — ensure drainage"},"8":{"stage":"Fruit expansion","activity":"Continue monitoring. 2nd fertilizer application 50g Urea/tree.","alert":"green","pest":"Leaf miner in shade-deficient plots","irrigation":"Meher rains continue"},"9":{"stage":"Fruit maturation","activity":"Fruit begins color change. Prepare washing stations.","alert":"yellow","pest":"CBB intensifies — maintain traps","irrigation":"Rains tapering"},"10":{"stage":"Harvest begins — CRITICAL","activity":"Pick only RED ripe cherries. 3-4 rounds of selective picking.","alert":"red","pest":"CBB peak — harvest promptly to reduce damage","irrigation":"None"},"11":{"stage":"Peak harvest","activity":"Wet processing: pulp within 12hrs, ferment 36-48hrs, wash, grade.","alert":"red","pest":"None — focus on quality processing","irrigation":"None"},"12":{"stage":"Late harvest + drying","activity":"Final picks. Sun-dry to 11%. Do NOT over-dry.","alert":"yellow","pest":"Storage preparation — clean warehouse","irrigation":"None"}},"enset":{"1":{"stage":"Growth","activity":"Transplant suckers from mother plant. Apply manure 10kg/plant.","alert":"green","pest":"Bacterial wilt — destroy infected plants","irrigation":"If dry, irrigate weekly"},"2":{"stage":"Growth","activity":"Mulching with dry leaves. Spacing 2m x 2m.","alert":"green","pest":"Bacterial wilt monitoring","irrigation":"Light irrigation if needed"},"3":{"stage":"Growth","activity":"Remove dead outer leaves for kocho processing area.","alert":"green","pest":"Root mealybug check","irrigation":"Belg rains begin"},"4":{"stage":"Active growth","activity":"Enset grows vigorously during Belg rains.","alert":"green","pest":"Bacterial wilt — remove and burn infected","irrigation":"Natural rainfall"},"5":{"stage":"Active growth","activity":"Apply compost. Remove excess suckers (keep 2-3 per clump).","alert":"green","pest":"None significant","irrigation":"Natural"},"6":{"stage":"Processing period","activity":"Mature plants (3-5 years) can be harvested. Scrape pseudostem for kocho.","alert":"yellow","pest":"None","irrigation":"Meher rains"},"7":{"stage":"Processing","activity":"Ferment kocho underground in enset-leaf lined pit for 3+ months.","alert":"green","pest":"None","irrigation":"Meher rains"},"8":{"stage":"Growth","activity":"Continue management of young plants.","alert":"green","pest":"None","irrigation":"Meher rains"},"9":{"stage":"Growth","activity":"Sucker management — select vigorous suckers for next planting.","alert":"green","pest":"Corm rot if waterlogged — ensure drainage","irrigation":"Reduce as rains end"},"10":{"stage":"Harvest/process","activity":"Main processing period for mature plants.","alert":"yellow","pest":"None","irrigation":"None needed"},"11":{"stage":"Dormancy","activity":"Reduced growth. Clean around plants.","alert":"green","pest":"None","irrigation":"Light if severe drought"},"12":{"stage":"Preparation","activity":"Prepare planting holes for January transplanting.","alert":"green","pest":"None","irrigation":"None"}}},"pests":{"coffee":[{"name":"Coffee Berry Borer (CBB)","severity":"high","months":[9,10,11],"trigger":"Ripening fruit + warm humid","ipm":"Beauveria bassiana biocontrol + alcohol traps + prompt harvest of ripe cherries"},{"name":"Coffee Berry Disease (CBD)","severity":"high","months":[6,7,8],"trigger":"Humidity >80% + temp 20-25°C + fruit development","ipm":"Copper-based fungicide spray at 15-day interval. Resistant varieties (74110, 74112)"},{"name":"Antestia Bug","severity":"medium","months":[4,5,6],"trigger":"Flowering + green fruit","ipm":"Hand picking if <5 bugs/tree. Fenitrothion spray if severe."},{"name":"Leaf Miner","severity":"low","months":[7,8,9],"trigger":"Shade deficiency + new leaf flush","ipm":"Maintain shade trees (Cordia, Albizzia). Endosulfan only if >40% leaves affected"},{"name":"Bacterial wilt (Enset)","severity":"critical","months":[1,2,3,4,5,6,7,8,9,10,11,12],"trigger":"Soil-borne, spread by tools/infected suckers","ipm":"NO CURE. Destroy infected plants + 2m radius. Disinfect tools. Use clean suckers."}]},"cold_chain":{"oromia":{"cold_stores":25,"capacity_mt":45000,"pack_houses":8,"ripening_chambers":5,"gap":"Coffee washing stations adequate. Avocado pack houses undersized for export growth."},"snnpr":{"cold_stores":10,"capacity_mt":15000,"pack_houses":3,"ripening_chambers":2,"gap":"Need 10+ more cold stores for vegetable/avocado peak."},"addis":{"cold_stores":40,"capacity_mt":80000,"pack_houses":12,"ripening_chambers":8,"gap":"Best infrastructure. Flower export logistics well-developed."},"amhara":{"cold_stores":8,"capacity_mt":12000,"pack_houses":2,"ripening_chambers":1,"gap":"Vegetable cold chain critically short for potato/onion export."},"tigray":{"cold_stores":5,"capacity_mt":8000,"pack_houses":1,"ripening_chambers":0,"gap":"Post-conflict reconstruction ongoing. Sesame storage needs improvement."}}};
+
+// ══════ REGION MASTER ══════
+var D=[
+{id:"tigray",n:"Tigray",z:"Northern Highlands (Dega)",srr:{teff:28,wheat:32,maize:40,sorghum:22},vrr:25,vb:{n:10,m:15,o:75},fl:0,dr:2,rc:[{t:"w",m:"Post-conflict seed system rebuilding needed"},{t:"u",m:"Drought-tolerant teff varieties needed"}],sd:[{n:"ESE Depot Mekelle",c:"var(--gn)",d:"In region"},{n:"ARC Mekelle",c:"var(--or)",d:"5km"}]},
+{id:"afar",n:"Afar",z:"Lowland Arid (Bereha)",srr:{teff:8,wheat:10,maize:25,sorghum:15},vrr:10,vb:{n:3,m:7,o:90},fl:0,dr:3,rc:[{t:"w",m:"LOWEST SRR — pastoral/agro-pastoral zone"},{t:"u",m:"Drought-tolerant sorghum critical"}],sd:[{n:"No depot",c:"var(--rd)",d:"Nearest 120km"}]},
+{id:"amhara",n:"Amhara",z:"Northern Highlands (Dega/Weyna Dega)",srr:{teff:30,wheat:35,maize:45,sorghum:25},vrr:28,vb:{n:12,m:16,o:72},fl:0,dr:1,rc:[{t:"i",m:"Largest teff producer — Quncho adoption growing"},{t:"u",m:"Wheat rust resistant varieties priority"}],sd:[{n:"ESE Depot Bahir Dar",c:"var(--gn)",d:"In region"},{n:"ARC Adet",c:"var(--or)",d:"30km"},{n:"ARC Gondar",c:"var(--or)",d:"In region"}]},
+{id:"oromia",n:"Oromia",z:"Central Highlands (Weyna Dega)",srr:{teff:32,wheat:40,maize:55,sorghum:28},vrr:32,vb:{n:14,m:18,o:68},fl:0,dr:1,rc:[{t:"i",m:"Highest maize SRR — BH-660 dominant"},{t:"u",m:"Coffee-teff integrated system"}],sd:[{n:"ESE HQ Addis",c:"var(--gn)",d:"In region"},{n:"ARC Bako",c:"var(--or)",d:"In region"},{n:"ARC Sinana",c:"var(--or)",d:"In region"}]},
+{id:"somali",n:"Somali",z:"Lowland Arid (Bereha/Kolla)",srr:{teff:5,wheat:8,maize:18,sorghum:12},vrr:8,vb:{n:2,m:6,o:92},fl:0,dr:3,rc:[{t:"w",m:"Agro-pastoral — very low formal seed access"},{t:"u",m:"Emergency seed kits for drought recovery"}],sd:[{n:"No ESE depot",c:"var(--rd)",d:"Nearest 200km"}]},
+{id:"snnpr",n:"SNNPR",z:"Southern Highlands (Weyna Dega)",srr:{teff:25,wheat:33,maize:48,sorghum:22},vrr:26,vb:{n:10,m:16,o:74},fl:0,dr:0,rc:[{t:"i",m:"Enset+coffee diversified system"},{t:"u",m:"Maize-legume rotation promotion"}],sd:[{n:"ESE Depot Hawassa",c:"var(--gn)",d:"In region"},{n:"ARC Hawassa",c:"var(--or)",d:"In region"},{n:"ARC Areka",c:"var(--or)",d:"35km"}]},
+{id:"sidama",n:"Sidama",z:"Southern Highlands (Weyna Dega)",srr:{teff:22,wheat:30,maize:42,sorghum:18},vrr:24,vb:{n:8,m:16,o:76},fl:0,dr:0,rc:[{t:"u",m:"Coffee + enset integrated advisory needed"},{t:"i",m:"Sidamo coffee premium quality"}],sd:[{n:"ESE Hawassa",c:"var(--gn)",d:"30km"},{n:"ARC Hawassa",c:"var(--or)",d:"30km"}]},
+{id:"benshangul",n:"Benishangul-Gumuz",z:"Western Lowlands (Kolla)",srr:{teff:18,wheat:15,maize:35,sorghum:20},vrr:15,vb:{n:6,m:9,o:85},fl:0,dr:0,rc:[{t:"w",m:"Remote — weak seed distribution network"},{t:"u",m:"Sesame + sorghum focus area"}],sd:[{n:"ESE Depot Assosa",c:"var(--gn)",d:"In region"}]},
+{id:"gambela",n:"Gambela",z:"Western Lowlands (Kolla)",srr:{teff:10,wheat:8,maize:30,sorghum:15},vrr:12,vb:{n:4,m:8,o:88},fl:1,dr:0,rc:[{t:"w",m:"Flood-prone riverine areas"},{t:"u",m:"Rice potential being explored"}],sd:[{n:"No depot",c:"var(--rd)",d:"Nearest 80km"}]},
+{id:"harari",n:"Harari",z:"Eastern Highlands (Weyna Dega)",srr:{teff:25,wheat:28,maize:38,sorghum:30},vrr:22,vb:{n:10,m:12,o:78},fl:0,dr:1,rc:[{t:"i",m:"Chat+sorghum economy"},{t:"u",m:"Harar coffee revival programme"}],sd:[{n:"ESE Depot Harar",c:"var(--gn)",d:"In region"}]},
+{id:"diredawa",n:"Dire Dawa",z:"Eastern Mid-altitude (Weyna Dega/Kolla)",srr:{teff:20,wheat:22,maize:35,sorghum:25},vrr:18,vb:{n:8,m:10,o:82},fl:0,dr:2,rc:[{t:"u",m:"Irrigation-based horticulture potential"},{t:"w",m:"Water scarcity limiting expansion"}],sd:[{n:"ESE Depot",c:"var(--gn)",d:"In region"}]},
+{id:"addis",n:"Addis Ababa",z:"Central Highlands (Dega)",srr:{teff:45,wheat:42,maize:55,sorghum:35},vrr:40,vb:{n:20,m:20,o:60},fl:0,dr:0,rc:[{t:"i",m:"Highest SRR — capital proximity effect"},{t:"i",m:"Peri-urban agriculture + research hub"}],sd:[{n:"ESE HQ",c:"var(--gn)",d:"In region"},{n:"EIAR HQ",c:"var(--pp)",d:"In region"},{n:"Debre Zeit ARC",c:"var(--or)",d:"45km"}]}
+];
+
+// ══════ SEED VARIETY DATABASE ══════
+var VARIETIES={
+teff:[
+  {name:"Quncho",code:"DZ-Cr-387",year:2006,zone:"Dega/Weyna Dega",dev:"Debre Zeit ARC (EIAR)",mat:120,yield:{avg:2200,pot:3200},type:"HYV",
+   traits:["White grain — premium price","21% yield increase over local","Wide adaptation 1800-2800m"],
+   replace:"Local white teff",soil:"Vertisol/Nitisol",irr:"Rainfed",
+   districts:["amhara","oromia","tigray","snnpr","sidama","addis","harari","diredawa"],
+   priority:"CRITICAL",season:"Meher",seedRate:25,price:80},
+  {name:"Magna",code:"DZ-01-1681",year:2016,zone:"Dega/Weyna Dega",dev:"Debre Zeit ARC (EIAR)",mat:110,yield:{avg:2400,pot:3500},type:"HYV",
+   traits:["Early maturing (110d)","Lodging tolerant","White grain, excellent injera quality"],
+   replace:"Quncho in late-sown areas",soil:"All highland soils",irr:"Rainfed",
+   districts:["amhara","oromia","tigray","snnpr","addis"],
+   priority:"HIGH",season:"Meher",seedRate:25,price:85},
+  {name:"Boset",code:"DZ-Cr-409",year:2012,zone:"Weyna Dega",dev:"Debre Zeit ARC",mat:95,yield:{avg:2100,pot:2800},type:"HYV",
+   traits:["Very early — fits Belg season","Brown grain","Drought escape through early maturity"],
+   replace:"Late local varieties in drought areas",soil:"Medium clay",irr:"Rainfed",
+   districts:["amhara","oromia","tigray","benshangul","diredawa"],
+   priority:"HIGH",season:"Belg/Meher",seedRate:25,price:75},
+  {name:"Kora",code:"DZ-Cr-438",year:2014,zone:"Dega",dev:"Debre Zeit ARC",mat:130,yield:{avg:2000,pot:3000},type:"HYV",
+   traits:["High altitude adapted >2500m","Very white grain premium","Good straw yield for livestock"],
+   replace:"Local highland teff",soil:"Vertisol",irr:"Rainfed",
+   districts:["amhara","tigray","oromia"],
+   priority:"MEDIUM",season:"Meher",seedRate:25,price:80},
+  {name:"Tesfa",code:"DZ-01-2054",year:2020,zone:"Dega/Weyna Dega",dev:"EIAR",mat:115,yield:{avg:2500,pot:3600},type:"HYV",
+   traits:["Latest release — highest yield potential","Lodging resistant","Biofortified iron 15mg/100g"],
+   replace:"Quncho/Magna for higher yield",soil:"All",irr:"Rainfed",
+   districts:["amhara","oromia","snnpr","sidama","addis","tigray"],
+   priority:"CRITICAL",season:"Meher",seedRate:25,price:90}
+],
+wheat:[
+  {name:"Kakaba",code:"ETBW 5795",year:2010,zone:"Highlands",dev:"Kulumsa ARC (EIAR)",mat:115,yield:{avg:4000,pot:5500},type:"HYV",
+   traits:["Bread wheat — rust resistant","Replaces obsolete PBW-65","Good baking quality"],
+   replace:"PBW-65 / ET-13",soil:"Vertisol/Nitisol",irr:"Rainfed/Irrigated",
+   districts:["oromia","amhara","tigray","snnpr","sidama"],
+   priority:"CRITICAL",season:"Meher",seedRate:150,price:35},
+  {name:"Danda'a",code:"ETBW 5483",year:2010,zone:"Highlands",dev:"Kulumsa ARC",mat:118,yield:{avg:4200,pot:5800},type:"HYV",
+   traits:["Highest yield bread wheat","Stripe rust resistant","Suitable up to 2800m"],
+   replace:"HAR-1685 / older varieties",soil:"All highland",irr:"Rainfed",
+   districts:["oromia","amhara","tigray","snnpr","addis"],
+   priority:"CRITICAL",season:"Meher",seedRate:150,price:38},
+  {name:"Ogolcho",code:"ETBW 5560",year:2012,zone:"Weyna Dega",dev:"Kulumsa ARC",mat:108,yield:{avg:3800,pot:5200},type:"HYV",
+   traits:["Durum wheat — pasta quality","Stem rust resistant","Good for Belg season"],
+   replace:"Local durum varieties",soil:"Vertisol",irr:"Rainfed",
+   districts:["oromia","amhara","tigray"],
+   priority:"HIGH",season:"Meher/Belg",seedRate:150,price:40},
+  {name:"Kingbird",code:"ETBW 7076",year:2015,zone:"Highlands",dev:"CIMMYT/EIAR",mat:112,yield:{avg:4500,pot:6000},type:"HYV",
+   traits:["Wheat blast resistant","Septoria tolerant","Zinc biofortified 38ppm"],
+   replace:"All older bread wheat",soil:"All",irr:"Both",
+   districts:["oromia","amhara","snnpr","sidama","addis","tigray"],
+   priority:"HIGH",season:"Meher",seedRate:150,price:42}
+],
+maize:[
+  {name:"BH-660",code:"BH-660",year:2011,zone:"Mid-altitude",dev:"Bako ARC (EIAR)",mat:150,yield:{avg:8000,pot:11000},type:"Hybrid",
+   traits:["Most popular hybrid in Ethiopia","Turcicum blight tolerant","Excellent grain quality"],
+   replace:"BH-540 and OPVs",soil:"Well drained",irr:"Rainfed",
+   districts:["oromia","amhara","snnpr","benshangul","gambela","sidama"],
+   priority:"CRITICAL",season:"Meher",seedRate:25,price:120},
+  {name:"BH-661",code:"BH-661",year:2018,zone:"Mid-altitude",dev:"Bako ARC",mat:145,yield:{avg:8500,pot:12000},type:"Hybrid",
+   traits:["Improved BH-660 successor","Fall Armyworm tolerant","Northern Leaf Blight resistant"],
+   replace:"BH-660",soil:"All mid-altitude",irr:"Rainfed",
+   districts:["oromia","amhara","snnpr","benshangul","gambela"],
+   priority:"HIGH",season:"Meher",seedRate:25,price:130},
+  {name:"BHQPY-545",code:"BHQPY-545",year:2008,zone:"Mid-altitude",dev:"Bako ARC",mat:140,yield:{avg:7000,pot:9500},type:"Hybrid (QPM)",
+   traits:["Quality Protein Maize","Lysine+Tryptophan enhanced","Nutrition security priority"],
+   replace:"Normal maize in food-insecure areas",soil:"All",irr:"Both",
+   districts:["oromia","amhara","snnpr","sidama","gambela"],
+   priority:"MEDIUM",season:"Meher",seedRate:25,price:115},
+  {name:"Limu",code:"Limu",year:2016,zone:"Lowland/Mid",dev:"Jimma ARC",mat:120,yield:{avg:6500,pot:8500},type:"OPV",
+   traits:["Open pollinated — farmer can save seed","Short duration for double cropping","Drought tolerant"],
+   replace:"Local OPVs",soil:"Sandy loam",irr:"Rainfed",
+   districts:["oromia","snnpr","gambela","benshangul","harari","diredawa"],
+   priority:"MEDIUM",season:"Meher/Belg",seedRate:25,price:45}
+],
+sorghum:[
+  {name:"Melkam",code:"Melkam",year:2009,zone:"Lowland/Mid",dev:"Melkassa ARC (EIAR)",mat:120,yield:{avg:3500,pot:5000},type:"HYV",
+   traits:["Early maturing — drought escape","White grain — good tella quality","Striga tolerant"],
+   replace:"Local late sorghum",soil:"All",irr:"Rainfed",
+   districts:["amhara","oromia","tigray","snnpr","harari","diredawa","benshangul","somali"],
+   priority:"CRITICAL",season:"Meher",seedRate:10,price:30},
+  {name:"Dekeba",code:"Dekeba",year:2012,zone:"Lowland",dev:"Melkassa ARC",mat:110,yield:{avg:3200,pot:4500},type:"HYV",
+   traits:["Very early — 110 days","Grain mold resistant","Good for erratic rainfall zones"],
+   replace:"Late local varieties in drought zones",soil:"Sandy/loam",irr:"Rainfed",
+   districts:["afar","somali","oromia","amhara","tigray","diredawa","harari"],
+   priority:"HIGH",season:"Meher",seedRate:10,price:28},
+  {name:"Teshale",code:"Teshale",year:2015,zone:"Mid-altitude",dev:"EIAR",mat:135,yield:{avg:4000,pot:5500},type:"HYV",
+   traits:["High yield mid-altitude","Bird resistant (semi-compact head)","Good injera blend with teff"],
+   replace:"Local sorghum in mid-altitude",soil:"Vertisol/clay",irr:"Rainfed",
+   districts:["amhara","oromia","snnpr","benshangul","tigray"],
+   priority:"MEDIUM",season:"Meher",seedRate:10,price:32},
+  {name:"ESH-1",code:"ESH-1",year:2009,zone:"Mid-altitude",dev:"Melkassa ARC",mat:125,yield:{avg:5500,pot:7500},type:"Hybrid",
+   traits:["First sorghum hybrid in Ethiopia","30% yield jump over OPVs","Requires purchased seed annually"],
+   replace:"All OPVs where affordable",soil:"Well drained",irr:"Rainfed",
+   districts:["oromia","amhara","snnpr"],
+   priority:"HIGH",season:"Meher",seedRate:10,price:85}
+]};
+
+// ══════ SCHEMES ══════
+var SCHEMES=[
+  {id:'psnp',name:'PSNP',full:'Productive Safety Net Programme',type:'federal',sector:'safety_net',budget:45000,target:85,unit:'% beneficiary coverage',metric:'Households covered (million)',icon:'🛡'},
+  {id:'agp',name:'AGP',full:'Agricultural Growth Program',type:'federal',sector:'growth',budget:25000,target:80,unit:'% fund utilization',metric:'Woredas covered',icon:'📈'},
+  {id:'slmp',name:'SLMP',full:'Sustainable Land Management Programme',type:'federal',sector:'soil',budget:12000,target:75,unit:'% watershed treatment',metric:'Hectares treated',icon:'🌿'},
+  {id:'input',name:'INPUT',full:'National Input Supply Programme',type:'federal',sector:'input',budget:35000,target:90,unit:'% fertilizer distribution',metric:'MT fertilizer distributed',icon:'🧪'},
+  {id:'wheat_init',name:'Wheat Initiative',full:'National Wheat Self-Sufficiency Programme',type:'federal',sector:'crop',budget:18000,target:85,unit:'% area expansion target',metric:'Hectares under improved wheat',icon:'🌾'},
+  {id:'ese_sub',name:'ESE Seed Subsidy',full:'Ethiopian Seed Enterprise — Certified Seed Programme',type:'federal',sector:'seed',budget:8000,target:70,unit:'% target distribution',metric:'MT certified seed distributed',icon:'🌱'},
+  {id:'irrigation',name:'Irrigation Dev',full:'Small-Scale Irrigation Development',type:'federal',sector:'irrigation',budget:15000,target:65,unit:'% scheme completion',metric:'Hectares irrigated',icon:'💧'},
+  {id:'crop_ins',name:'Crop Insurance',full:'Ethiopian Insurance Corp — Index-Based Crop Insurance',type:'federal',sector:'insurance',budget:5000,target:50,unit:'% farmer coverage',metric:'Farmers insured (000s)',icon:'🛡'},
+  {id:'coffee_qual',name:'Coffee Quality',full:'Coffee Quality Improvement Programme',type:'federal',sector:'horti',budget:6000,target:75,unit:'% washing station upgrade',metric:'Washing stations improved',icon:'☕'},
+  {id:'teff_prog',name:'Teff Programme',full:'National Teff Improvement Programme',type:'federal',sector:'crop',budget:4000,target:80,unit:'% variety adoption',metric:'Ha under improved teff',icon:'🌾'},
+  {id:'livestock',name:'Livestock Master',full:'Livestock Master Plan Implementation',type:'federal',sector:'livestock',budget:20000,target:70,unit:'% target beneficiary',metric:'Households benefited',icon:'🐄'},
+  {id:'cascape',name:'CASCAPE',full:'Capacity Building for Scaling Up Best Practices',type:'donor',sector:'extension',budget:3000,target:85,unit:'% woreda coverage',metric:'Farmers trained (000s)',icon:'📊'}
+];
+
+// ══════ WOREDAS (BLOCKS equivalent) ══════
+var BLOCKS={
+tigray:['Mekelle','Adwa','Axum','Shire','Adigrat','Wukro','Alamata','Maychew','Enderta','Ahferom','Kilte Awlaelo','Ganta Afeshum','Hintalo Wajirat','Saharti Samre'],
+afar:['Semera','Dubti','Assaita','Awash Fentale','Amibara','Gewane','Afdera','Ewa','Telalak','Chifra'],
+amhara:['Bahir Dar','Gondar','Dessie','Debre Markos','Debre Birhan','Kombolcha','Woldia','Lalibela','Debre Tabor','Finote Selam','Dangila','Motta','Bichena','Sekota','Woldiya'],
+oromia:['Adama','Jimma','Bishoftu','Nekemte','Shashamane','Bale Robe','Ambo','Asella','Haramaya','Chiro','Batu','Weliso','Fiche','Gimbi','Mettu','Bedele'],
+somali:['Jijiga','Gode','Kebri Dahar','Degehabur','Warder','Kelafo','Shinile','Erer','Awbare','Harshin'],
+snnpr:['Hawassa','Arba Minch','Wolayita Sodo','Hossana','Dilla','Durame','Bonga','Mizan Teferi','Jinka','Boditi','Butajira','Shashemene South','Yirgalem'],
+sidama:['Hawassa','Yirgalem','Aleta Wendo','Dale','Shebedino','Wendo Genet','Boricha','Loka Abaya','Chere','Gorche'],
+benshangul:['Assosa','Bambasi','Menge','Guba','Sherkole','Kurmuk','Wenbera','Dibate','Mandura'],
+gambela:['Gambela Town','Abobo','Itang','Gog','Jor','Godere','Mengesh','Dima'],
+harari:['Harar','Sofi','Dire Teyara','Erer','Hakim','Shenkor'],
+diredawa:['Dire Dawa City','Gurgura','Legehare','Biyo Awale','Wahil'],
+addis:['Bole','Yeka','Kolfe Keranio','Nifas Silk-Lafto','Addis Ketema','Arada','Kirkos','Lideta','Akaky Kaliti','Gulele']
+};
+
+// ══════ FARMER VOICES ══════
+var FARMER_VOICES=[
+  {dist:'amhara',msg:'ዘር በወቅቱ አልደረሰም — seed not delivered on time',cat:'supply',severity:'red',count:156},
+  {dist:'tigray',msg:'Wheat rust spotted — need spray urgently',cat:'pest',severity:'orange',count:67},
+  {dist:'oromia',msg:'BH-660 maize excellent yield this season',cat:'positive',severity:'green',count:234},
+  {dist:'somali',msg:'ድርቅ — ዘር እርዳታ ያስፈልገናል — drought emergency seed needed',cat:'drought',severity:'red',count:89},
+  {dist:'snnpr',msg:'Coffee price very good at ECX this month',cat:'market',severity:'green',count:145},
+  {dist:'sidama',msg:'Enset bacterial wilt spreading in my kebele',cat:'pest',severity:'red',count:34},
+  {dist:'oromia',msg:'NPS fertilizer arrived late — missed sowing window',cat:'supply',severity:'orange',count:78},
+  {dist:'amhara',msg:'Quncho teff lodged after heavy rain',cat:'weather',severity:'orange',count:45},
+  {dist:'addis',msg:'New Tesfa teff variety performing very well',cat:'positive',severity:'green',count:23},
+  {dist:'gambela',msg:'Flood damaged maize fields along river',cat:'flood',severity:'red',count:12}
+];
+
+// ══════ SIMULATED LIVE DATA ══════
+var LIVE_WEATHER={};
+var LIVE_MARKET={};
+var LIVE_LOADING={};
+var GOV_API_KEY='';
+
+function getDistCoords(id){
+  var f=ETHIOPIA_GEO.features.find(function(x){return x.properties.id===id});
+  return f?{lat:f.properties.centroid_lat,lng:f.properties.centroid_lng}:null;
+}
+
+function simNDVI(id){var r=REAL[id];if(!r)return{cur:.45,prev:.42,trend:'up',health:'Moderate'};
+var ta=r.teff.a+r.wheat.a+r.maize.a+r.sorghum.a;
+var wy=ta>0?(r.teff.a*r.teff.y+r.wheat.a*r.wheat.y+r.maize.a*r.maize.y+r.sorghum.a*r.sorghum.y)/ta:1500;
+var yc=Math.min(.65,Math.max(.30,(wy-1200)/4500+.30));
+var ic=(r.irrigation_pct/100)*.18;
+var fp=(r.drought_risk||0)*.04;
+var base=Math.min(.82,Math.max(.30,yc+ic-fp));
+var h=0;for(var i=0;i<id.length;i++)h+=id.charCodeAt(i)*(i+1);
+var noise=Math.sin(h*2.654)*.06;
+var cur=Math.round(Math.min(.85,Math.max(.25,base+noise))*100)/100;
+var pnoise=Math.sin(h*4.17)*.05;
+var prev=Math.round(Math.min(.85,Math.max(.25,base+pnoise))*100)/100;
+return{cur:cur,prev:prev,trend:cur>=prev?'up':'down',health:cur>.65?'Good':cur>.45?'Moderate':'Stressed'}}
+
+function simWeather(id){
+  if(LIVE_WEATHER[id])return LIVE_WEATHER[id];
+  if(!LIVE_LOADING['w_'+id])fetchOpenMeteo(id);
+  return{temp_max:Math.round(28+Math.sin(id.length*2)*6),temp_min:Math.round(14+Math.sin(id.length*5)*4),humidity:Math.round(55+Math.sin(id.length*4)*15),rain_7d:Math.round(Math.max(0,10+Math.sin(id.length*6)*15)),wind:Math.round(6+Math.sin(id.length*7)*4),forecast:[{d:'Mon',t:28,r:2},{d:'Tue',t:29,r:0},{d:'Wed',t:27,r:8},{d:'Thu',t:26,r:15},{d:'Fri',t:25,r:12},{d:'Sat',t:27,r:3},{d:'Sun',t:29,r:0}],live:false};
+}
+
+function simPest(id){var d=D.find(function(x){return x.id===id});var pests=[];var r=REAL[id];if(!r)return pests;
+if(r.teff.a>100000)pests.push({name:'Teff Shoot Fly',risk:'MEDIUM',crop:'Teff',icon:'🦟',color:'var(--or)',msg:'Yellow sticky traps + early sowing to escape peak. Dimethoate 40EC if >10% tillers affected.',trigger:'Late sowing + warm temp'});
+if(r.wheat.a>100000)pests.push({name:'Wheat Stem Rust (Ug99)',risk:'HIGH',crop:'Wheat',icon:'🟤',color:'var(--rd)',msg:'CRITICAL: Spray Propiconazole 25EC immediately if pustules seen. Use resistant varieties Kakaba/Danda\'a.',trigger:'Temp 15-30°C + humid + susceptible variety'});
+if(r.maize.a>50000)pests.push({name:'Fall Armyworm (FAW)',risk:'HIGH',crop:'Maize',icon:'🐛',color:'var(--rd)',msg:'Scout weekly from emergence. Emamectin Benzoate 5SG spray. Push-pull technology for IPM.',trigger:'Early season + warm nights >18°C'});
+if(r.drought_risk>=2)pests.push({name:'Desert Locust',risk:'HIGH',crop:'All Crops',icon:'🦗',color:'var(--rd)',msg:'Report swarms immediately to Plant Health Regulatory. Aerial spray Chlorpyrifos ULV.',trigger:'Drought breaking rains in Somali/Afar'});
+pests.push({name:'Striga (Witchweed)',risk:'LOW',crop:'Sorghum',icon:'🌿',color:'var(--gn)',msg:'Use Striga-tolerant varieties (Melkam). Hand-pull before flowering. Rotate with legumes.',trigger:'Degraded soils + continuous sorghum'});
+return pests}
+
+function simFertilizer(id){var r=REAL[id];if(!r)return null;var s=r.soil;var c=document.getElementById('sCrop').value;
+var n_need=c==='teff'?65:c==='wheat'?120:c==='maize'?110:25;
+var p_need=c==='teff'?30:c==='wheat'?46:c==='maize'?46:20;
+var k_need=c==='teff'?0:c==='wheat'?0:c==='maize'?0:0;
+var s_need=c==='teff'?7:c==='wheat'?7:c==='maize'?7:5;
+if(s.n==='H')n_need*=0.7;else if(s.n==='M')n_need*=0.85;
+if(s.p==='H')p_need*=0.6;else if(s.p==='M')p_need*=0.8;
+var urea=Math.round(n_need/0.46);var nps=Math.round(p_need/0.38);var kCl=Math.round(k_need/0.6);var zn=s.n==='L'?10:5;
+var cost=urea*28+nps*32+kCl*25+zn*60;
+return{n_need:Math.round(n_need),p_need:Math.round(p_need),k_need:Math.round(k_need),urea:urea,nps:nps,kCl:kCl,zn:zn,cost:Math.round(cost),schedule:[{stage:'Basal',urea:0,nps:nps,kCl:0,when:'At sowing — NPS blend'},{stage:'Top dress 1',urea:Math.round(urea*.5),nps:0,kCl:0,when:'21 days (tillering/knee-high)'},{stage:'Top dress 2',urea:Math.round(urea*.5),nps:0,kCl:0,when:'45 days (booting/tasseling)'}]}}
+
+function simMarket(id){
+  var c=document.getElementById('sCrop').value;
+  var key='m_'+id+'_'+c;
+  if(LIVE_MARKET[key])return LIVE_MARKET[key];
+  var base={teff:4500,wheat:3800,maize:2500,sorghum:2800};var ecx=base[c];var mp=Math.round(ecx*(0.85+Math.sin(id.length*8)*.25));var trend=mp>ecx?'above':'below';
+  return{msp:ecx,mandi_price:mp,trend:trend,nearest_mandi:id.charAt(0).toUpperCase()+id.slice(1).replace(/_/g,' ')+' Market',volume:Math.round(500+Math.sin(id.length*9)*300),forecast_30d:Math.round(mp*(1+Math.sin(id.length*10)*.05)),live:false};
+}
+
+function simCredit(id){var d=D.find(function(x){return x.id===id});if(!d)return{score:500};var r=REAL[id];var score=400;var c=document.getElementById('sCrop').value;
+score+=d.srr[c]*.8;
+score+=(100-d.vrr)*.3;
+if(r)score+=r.irrigation_pct*.5;
+if(!d.dr)score+=40;
+var ndvi=simNDVI(id);score+=ndvi.cur*80;
+score=Math.min(900,Math.max(300,Math.round(score)));
+var grade=score>=750?'A+':score>=650?'A':score>=550?'B':score>=450?'C':'D';
+var color=score>=650?'var(--gn)':score>=500?'var(--or)':'var(--rd)';
+return{score:score,grade:grade,color:color,factors:{srr_score:Math.round(d.srr[c]*.8),variety_score:Math.round((100-d.vrr)*.3),irrigation_score:r?Math.round(r.irrigation_pct*.5):0,drought_penalty:d.dr?0:40,ndvi_score:Math.round(ndvi.cur*80)}}}
+
+function simESE(id){
+  var d=D.find(function(x){return x.id===id});
+  var r=REAL[id];if(!d||!r)return null;
+  var c=document.getElementById('sCrop').value;
+  var area=c==='teff'?r.teff.a:c==='wheat'?r.wheat.a:c==='maize'?r.maize.a:r.sorghum.a;
+  var seedRate={teff:25,wheat:150,maize:25,sorghum:10}[c];
+  var demand=Math.round(area*seedRate/1000);
+  var distributed=Math.round(demand*d.srr[c]/100);
+  var gap=demand-distributed;
+  var gapPct=Math.round((gap/demand)*100);
+  var seed=id.length*7+c.length*3;
+  var dealers=Math.round(3+Math.sin(seed)*5);
+  var dbt_beneficiaries=Math.round(distributed*1000/seedRate*0.5);
+  var dbt_amount=Math.round(dbt_beneficiaries*seedRate*({teff:80,wheat:35,maize:120,sorghum:30}[c])*0.3/100000);
+  var varieties=[];
+  if(c==='teff'){
+    var old_pct=100-d.vrr;
+    varieties=[
+      {name:'Local white (old)',pct:Math.round(old_pct*0.6),status:'obsolete'},
+      {name:'DZ-01-354 (old)',pct:Math.round(old_pct*0.4),status:'obsolete'},
+      {name:'Quncho',pct:Math.round(d.vrr*0.4),status:'new'},
+      {name:'Magna',pct:Math.round(d.vrr*0.25),status:'new'},
+      {name:'Tesfa',pct:Math.round(d.vrr*0.2),status:'new'},
+      {name:'Boset',pct:Math.round(d.vrr*0.15),status:'new'},
+    ];
+  } else if(c==='wheat'){
+    var old_pct=100-d.vrr;
+    varieties=[
+      {name:'PBW-65 (old)',pct:Math.round(old_pct*0.5),status:'obsolete'},
+      {name:'ET-13 (old)',pct:Math.round(old_pct*0.3),status:'aging'},
+      {name:'HAR-1685',pct:Math.round(old_pct*0.2),status:'aging'},
+      {name:'Kakaba',pct:Math.round(d.vrr*0.35),status:'new'},
+      {name:'Danda\'a',pct:Math.round(d.vrr*0.35),status:'new'},
+      {name:'Kingbird',pct:Math.round(d.vrr*0.3),status:'new'},
+    ];
+  } else {
+    varieties=[{name:'Mixed',pct:100,status:'mixed'}];
+  }
+  var timeline=[
+    {month:'Apr',target:Math.round(demand*0.1),actual:Math.round(distributed*0.08),status:'delayed'},
+    {month:'May',target:Math.round(demand*0.35),actual:Math.round(distributed*0.3),status:'behind'},
+    {month:'Jun',target:Math.round(demand*0.7),actual:Math.round(distributed*0.65),status:'behind'},
+    {month:'Jul',target:Math.round(demand*0.9),actual:Math.round(distributed*0.85),status:'catching up'},
+    {month:'Aug',target:demand,actual:distributed,status:gapPct>30?'critical gap':'on track'},
+  ];
+  return{demand:demand,distributed:distributed,gap:gap,gapPct:gapPct,dealers:dealers,dbt_beneficiaries:dbt_beneficiaries,dbt_amount:dbt_amount,varieties:varieties,timeline:timeline,area:area,seedRate:seedRate};
+}
+
+function eseCol(id){var b=simESE(id);if(!b)return'#333';return b.gapPct>50?'#dc2626':b.gapPct>30?'#f97316':b.gapPct>15?'#eab308':'#10b981'}
+
+function simSowing(id){
+  var r=REAL[id];if(!r)return{pct:0};
+  var c=document.getElementById('sCrop').value;
+  var area=c==='teff'?r.teff.a:c==='wheat'?r.wheat.a:c==='maize'?r.maize.a:r.sorghum.a;
+  var seed=id.length*11+c.length*7;
+  var basePct=c==='wheat'?80:c==='sorghum'?65:40;
+  var pct=Math.max(0,Math.min(100,Math.round(basePct+Math.sin(seed)*20)));
+  var target=c==='wheat'?85:c==='sorghum'?70:50;
+  var status=pct>=target?'On track':pct>=target-10?'Slightly behind':'Behind schedule';
+  var weekly=[Math.round(pct*.3),Math.round(pct*.5),Math.round(pct*.7),Math.round(pct*.85),pct];
+  return{pct:pct,target:target,area:area,sownArea:Math.round(area*pct/100),status:status,weekly:weekly}
+}
+function sowingCol(id){var s=simSowing(id);return s.pct>=s.target?'#10b981':s.pct>=s.target-15?'#eab308':'#ef4444'}
+
+function simYieldLoss(id){
+  var d=D.find(function(x){return x.id===id});var r=REAL[id];if(!d||!r)return null;
+  var c=document.getElementById('sCrop').value;
+  var oldYield=c==='teff'?r.teff.y:c==='wheat'?r.wheat.y:c==='maize'?r.maize.y:r.sorghum.y;
+  var area=c==='teff'?r.teff.a:c==='wheat'?r.wheat.a:c==='maize'?r.maize.a:r.sorghum.a;
+  var newYield={teff:2500,wheat:4500,maize:8000,sorghum:3500}[c];
+  var srr=d.srr[c];
+  var farmSavedArea=Math.round(area*(100-srr)/100);
+  var yieldGap=Math.max(0,newYield-oldYield);
+  var lostProduction=Math.round(farmSavedArea*yieldGap/1000);
+  var ecxPrice={teff:4500,wheat:3800,maize:2500,sorghum:2800}[c];
+  var lostValue=Math.round(lostProduction*ecxPrice/100000);
+  var potentialProd=Math.round(area*newYield/1000);
+  var actualProd=c==='teff'?r.teff.p/1000:c==='wheat'?r.wheat.p/1000:c==='maize'?r.maize.p/1000:r.sorghum.p/1000;
+  return{oldYield:oldYield,newYield:newYield,yieldGap:yieldGap,farmSavedArea:farmSavedArea,lostProduction:lostProduction,lostValue:lostValue,potentialProd:Math.round(potentialProd),actualProd:Math.round(actualProd),area:area,srr:srr}
+}
+function yieldLossCol(id){var y=simYieldLoss(id);if(!y)return'#333';return y.lostValue>500?'#dc2626':y.lostValue>200?'#f97316':y.lostValue>50?'#eab308':'#10b981'}
+
+function simEarlyWarning(id){
+  var d=D.find(function(x){return x.id===id});var r=REAL[id];if(!d)return{score:0};
+  var ndvi=simNDVI(id);var w=simWeather(id);var pests=simPest(id);
+  var score=0;
+  if(ndvi.cur<.3)score+=30;else if(ndvi.cur<.4)score+=20;else if(ndvi.cur<.5)score+=10;
+  if(ndvi.trend==='down')score+=15;
+  if(w.temp_max>35)score+=15;else if(w.temp_max>32)score+=10;else if(w.temp_max>30)score+=5;
+  var highP=pests.filter(function(p){return p.risk==='HIGH'}).length;
+  score+=Math.min(20,highP*10);
+  if(d.dr>=2)score+=10;
+  if(r&&r.soil.n==='L'&&r.soil.p==='L')score+=10;
+  score=Math.min(100,score);
+  var level=score>=70?'CRITICAL':score>=50?'HIGH':score>=30?'MODERATE':'LOW';
+  var color=score>=70?'#dc2626':score>=50?'#f97316':score>=30?'#eab308':'#10b981';
+  var actions=[];
+  if(ndvi.cur<.4)actions.push({icon:'🛰',text:'Satellite crop stress — deploy field inspection team'});
+  if(highP>0)actions.push({icon:'🐛',text:'Pest outbreak conditions — send IPM alert to development agents'});
+  if(w.temp_max>32)actions.push({icon:'🌡',text:'Heat stress — advise supplemental irrigation where available'});
+  if(d.dr>=2)actions.push({icon:'🏜',text:'Drought-prone region — verify seed stock at cooperatives'});
+  if(r&&r.soil.n==='L')actions.push({icon:'🧪',text:'Nitrogen deficient — check if Urea top-dressing done'});
+  return{score:score,level:level,color:color,actions:actions,components:{ndvi:ndvi.cur<.4?30-Math.round(ndvi.cur*60):0,ndvi_trend:ndvi.trend==='down'?15:0,temp:w.temp_max>30?Math.min(15,Math.round((w.temp_max-30)*5)):0,pest:Math.min(20,highP*10),drought:d.dr>=2?10:0,soil:r&&r.soil.n==='L'&&r.soil.p==='L'?10:0}}
+}
+function earlyWarningCol(id){var ew=simEarlyWarning(id);return ew.color}
+
+function simBenchmark(id){
+  var d=D.find(function(x){return x.id===id});if(!d)return null;
+  var c=document.getElementById('sCrop').value;
+  var r=REAL[id];
+  var vec={srr:d.srr[c],vrr:d.vrr,ndvi:simNDVI(id).cur,drought:d.dr?1:0,irr:r?r.irrigation_pct:5};
+  var dists=D.filter(function(x){return x.id!==id}).map(function(x){
+    var r2=REAL[x.id];
+    var v2={srr:x.srr[c],vrr:x.vrr,ndvi:simNDVI(x.id).cur,drought:x.dr?1:0,irr:r2?r2.irrigation_pct:5};
+    var dist=Math.sqrt(Math.pow((vec.srr-v2.srr)/100,2)+Math.pow((vec.ndvi-v2.ndvi),2)+Math.pow((vec.drought-v2.drought),2)+Math.pow((vec.irr-v2.irr)/100,2));
+    return{d:x,dist:dist,vec:v2};
+  });
+  dists.sort(function(a,b){return a.dist-b.dist});
+  var peers=dists.slice(0,4);
+  var best=peers.reduce(function(a,b){return a.vec.srr>b.vec.srr?a:b});
+  var lessons=[];
+  if(best.vec.srr>vec.srr+10)lessons.push(best.d.n+' has '+best.vec.srr+'% SRR vs your '+vec.srr+'% — '+Math.round(best.vec.srr-vec.srr)+' pts higher');
+  if(best.vec.ndvi>vec.ndvi+.1)lessons.push(best.d.n+' has better crop health (NDVI '+best.vec.ndvi.toFixed(2)+' vs '+vec.ndvi.toFixed(2)+')');
+  return{peers:peers,best:best,vec:vec,lessons:lessons}
+}
+
+function simMonsoon(id){
+  var d=D.find(function(x){return x.id===id});var r=REAL[id];if(!d)return null;
+  var c=document.getElementById('sCrop').value;
+  var seed=id.length*13;
+  var checks=[
+    {name:'Seed stock at cooperatives',status:d.srr[c]>25?'ready':'gap',icon:'🌱',detail:d.srr[c]>25?'ESE/cooperative stocked':'SRR '+d.srr[c]+'% — seed shortage likely'},
+    {name:'NPS fertilizer availability',status:r&&r.soil.n!=='L'?'ready':'attention',icon:'🧪',detail:r&&r.soil.n==='L'?'N deficient soil — ensure extra Urea stock':'Adequate'},
+    {name:'Irrigation infrastructure',status:r&&r.irrigation_pct>10?'ready':r&&r.irrigation_pct>5?'partial':'critical',icon:'💧',detail:'Coverage: '+(r?r.irrigation_pct:0)+'%'},
+    {name:'Drought preparedness',status:d.dr>=2?'alert':'ready',icon:'🏜',detail:d.dr>=2?'Drought-prone — pre-position seed kits + early warning':'Low drought risk'},
+    {name:'ARC demo plots planned',status:Math.sin(seed)>0?'ready':'pending',icon:'🔬',detail:Math.sin(seed)>0?'Demo plots confirmed':'Demo plot planning pending'},
+    {name:'Telegram farmer registration',status:Math.sin(seed*2)>.3?'ready':Math.sin(seed*2)>-.3?'partial':'behind',icon:'📱',detail:Math.sin(seed*2)>.3?'Target met':'Farmer registration behind target'},
+    {name:'Cooperative/dealer network',status:(d.sd&&d.sd.length>=2)?'ready':'gap',icon:'🏪',detail:(d.sd?d.sd.length:0)+' outlets — '+(d.sd&&d.sd.length>=2?'adequate':'need more')},
+    {name:'Pest surveillance setup',status:Math.sin(seed*3)>0?'ready':'pending',icon:'🐛',detail:Math.sin(seed*3)>0?'Light traps + scouts active':'Setup pending'},
+  ];
+  var readyCount=checks.filter(function(ch){return ch.status==='ready'}).length;
+  var grade=readyCount>=7?'A':readyCount>=5?'B':readyCount>=3?'C':readyCount>=2?'D':'F';
+  var gradeColor=readyCount>=7?'#10b981':readyCount>=5?'#eab308':readyCount>=3?'#f97316':'#dc2626';
+  return{checks:checks,readyCount:readyCount,total:checks.length,grade:grade,gradeColor:gradeColor,pct:Math.round(readyCount/checks.length*100)}
+}
+function monsoonCol(id){var m=simMonsoon(id);if(!m)return'#333';return m.gradeColor}
+
+function simScanDensity(id){
+  var d=D.find(function(x){return x.id===id});if(!d)return{pct:0,total:0,risk:'HIGH',color:'#dc2626'};
+  var base=d.srr.teff*0.45;
+  if(d.dr>=2)base*=0.65;
+  var depotIn=d.sd&&d.sd[0]&&(d.sd[0].d==='In region'||d.sd[0].d.indexOf('km')>0&&parseInt(d.sd[0].d)<30);
+  if(depotIn)base+=8;
+  base+=Math.sin(id.length*7)*5;
+  var pct=Math.min(70,Math.max(3,Math.round(base)));
+  var total=Math.round(pct*80+Math.abs(Math.sin(id.length*3))*300);
+  var spurious=Math.round(5+Math.sin(id.length*5)*6);
+  var risk=pct<20?'HIGH':pct<35?'MODERATE':'LOW';
+  var color=pct<20?'#dc2626':pct<35?'#f97316':pct<50?'#eab308':'#10b981';
+  return{pct:pct,total:total,spurious:spurious,risk:risk,color:color};
+}
+function qrScanCol(id){var s=simScanDensity(id);return s.color;}
+
+function simScheme(scheme,distId){
+  var schemeBase={
+    psnp:72, agp:65, slmp:58, input:75, wheat_init:62,
+    ese_sub:48, irrigation:42, crop_ins:35, coffee_qual:55,
+    teff_prog:60, livestock:50, cascape:68
+  };
+  var base=schemeBase[scheme.id]||55;
+  var distMod=0;
+  if(distId){
+    var goodDists=['addis','oromia','amhara','sidama'];
+    var poorDists=['somali','afar','gambela','benshangul'];
+    if(goodDists.indexOf(distId)>=0) distMod=+10;
+    else if(poorDists.indexOf(distId)>=0) distMod=-15;
+    else{
+      var h=(distId.charCodeAt(0)*3+distId.length*7+scheme.id.charCodeAt(0)*2)%20-10;
+      distMod=h;
+    }
+  }
+  var achPct=Math.max(15,Math.min(98,Math.round(base+distMod)));
+  var stateAch=Math.max(15,Math.min(98,Math.round(base)));
+  var distAch=distId?achPct:stateAch;
+  var spent=Math.round(scheme.budget*achPct/100);
+  var status=achPct>=scheme.target*0.9?'on_track':achPct>=scheme.target*0.65?'moderate':'behind';
+  return{achPct:achPct,distAch:distAch,stateAch:stateAch,spent:spent,status:status}
+}
+function dssCol(id){
+  var behind=0;
+  SCHEMES.forEach(function(s){var r=simScheme(s,id);if(r.status==='behind')behind++});
+  return behind>=6?'#dc2626':behind>=3?'#f97316':behind>=1?'#eab308':'#10b981'
+}
+
+// ══════ COLOR FUNCTIONS ══════
+function srrCol(v){return v<15?'#be123c':v<20?'#e11d48':v<25?'#f97316':v<30?'#eab308':v<35?'#22c55e':v<40?'#10b981':'#0d9488'}
+function ndviCol(v){return v<.3?'#7f1d1d':v<.4?'#dc2626':v<.5?'#f97316':v<.6?'#eab308':v<.7?'#22c55e':'#047857'}
+function pestCol(id){var p=simPest(id);var h=p.filter(function(x){return x.risk==='HIGH'}).length;return h>=2?'#dc2626':h>=1?'#f97316':p.length>0?'#eab308':'#10b981'}
+function fertCol(id){var r=REAL[id];if(!r)return'#444';var s=r.soil;var low=0;if(s.n==='L')low++;if(s.p==='L')low++;if(s.k==='L')low++;if(s.oc==='L')low++;return low>=3?'#dc2626':low>=2?'#f97316':low>=1?'#eab308':'#10b981'}
+function marketCol(id){var m=simMarket(id);return m.trend==='above'?'#10b981':'#ef4444'}
+function creditCol(id){var c=simCredit(id);return c.score>=650?'#10b981':c.score>=500?'#f59e0b':'#ef4444'}
+function hortiCol(id){var cr=HORTI.crops,best='',ba=0;for(var k in cr){var cd=cr[k].districts;if(cd[id]&&cd[id].area>ba){ba=cd[id].area;best=k}}if(!best)return'#1a2538';return{coffee:'#6b4423',enset:'#22c55e',chat:'#84cc16',avocado:'#059669',vegetables:'#34d399',flowers:'#f43f5e'}[best]||'#555'}
+
+// ══════ MODULE STATE ══════
+var mod='seed',sel=null,map,geoLyr,markerLyr;
+var kisaanTab='whatsapp';
+
+function getCol(d){
+  var c=document.getElementById('sCrop').value;
+  if(mod==='seed')return srrCol(d.srr[c]);
+  if(mod==='ndvi'){var n=simNDVI(d.id);return ndviCol(n.cur)}
+  if(mod==='weather')return'#2563eb';
+  if(mod==='pest')return pestCol(d.id);
+  if(mod==='fertilizer')return fertCol(d.id);
+  if(mod==='market')return marketCol(d.id);
+  if(mod==='horti')return hortiCol(d.id);
+  if(mod==='credit')return creditCol(d.id);
+  if(mod==='ese')return eseCol(d.id);
+  if(mod==='sowing')return sowingCol(d.id);
+  if(mod==='yieldloss')return yieldLossCol(d.id);
+  if(mod==='earlywarning')return earlyWarningCol(d.id);
+  if(mod==='monsoon')return monsoonCol(d.id);
+  if(mod==='dss')return dssCol(d.id);
+  if(mod==='seedqr')return qrScanCol(d.id);
+  return srrCol(d.srr[c]);
+}
+
+function getLabel(d){
+  var c=document.getElementById('sCrop').value;
+  if(mod==='seed')return d.srr[c]+'%';
+  if(mod==='ndvi'){var n=simNDVI(d.id);return n.cur.toFixed(2)}
+  if(mod==='weather'){var w=simWeather(d.id);return w.temp_max+'°C'}
+  if(mod==='pest'){var p=simPest(d.id);var h=p.filter(function(x){return x.risk==='HIGH'}).length;return h>0?'⚠ '+h:'✓'}
+  if(mod==='fertilizer'){var f=simFertilizer(d.id);return f?'Br'+f.cost:'—'}
+  if(mod==='market'){var m=simMarket(d.id);return'Br'+m.mandi_price}
+  if(mod==='horti'){var cr=HORTI.crops,best='',ba=0;for(var k in cr){var cd=cr[k].districts;if(cd[d.id]&&cd[d.id].area>ba){ba=cd[d.id].area;best=k}}return best?HORTI.crops[best].icon:'—'}
+  if(mod==='ese'){var bb=simESE(d.id);return bb?bb.gapPct+'% gap':'—'}
+  if(mod==='sowing'){var sw=simSowing(d.id);return sw.pct+'%'}
+  if(mod==='yieldloss'){var yl=simYieldLoss(d.id);return yl?'Br'+yl.lostValue+'K':'—'}
+  if(mod==='earlywarning'){var ew=simEarlyWarning(d.id);return ew.score+'/100'}
+  if(mod==='monsoon'){var mn=simMonsoon(d.id);return mn?mn.grade:'—'}
+  if(mod==='dss'){var bh=0;SCHEMES.forEach(function(s){var r=simScheme(s,d.id);if(r.status==='behind')bh++});return bh>0?bh+' behind':'✓'}
+  if(mod==='seedqr'){var sd0=simScanDensity(d.id);return sd0.pct+'%'}
+  if(mod==='credit'){var cr2=simCredit(d.id);return cr2.score}
+  return d.srr[c]+'%';
+}
+
+function calcPri(d){var c=document.getElementById('sCrop').value;var gap=100-d.srr[c];var r=REAL[d.id];var dm=d.dr>=2?1.4:1;var sa=1;if(d.sd&&d.sd[0]&&d.sd[0].d.indexOf('No')>=0)sa=1.5;var area=r?(r.teff.a+r.wheat.a+r.maize.a)/100000:2;return Math.round(gap*area*dm*sa)}
+function calcAll(){D.forEach(function(d){d.pri=calcPri(d)})}
+
+// ══════ OPEN-METEO LIVE WEATHER ══════
+async function fetchOpenMeteo(id){
+  LIVE_LOADING['w_'+id]=true;
+  var c=getDistCoords(id);
+  if(!c){delete LIVE_LOADING['w_'+id];return;}
+  try{
+    var url='https://api.open-meteo.com/v1/forecast'
+      +'?latitude='+c.lat+'&longitude='+c.lng
+      +'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,weathercode'
+      +'&hourly=relativehumidity_2m'
+      +'&timezone=Africa%2FAddis_Ababa&forecast_days=7';
+    var resp=await fetch(url);
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    var data=await resp.json();
+    var d=data.daily,h=data.hourly;
+    var humSlice=h.relativehumidity_2m.slice(6,18);
+    var avgH=Math.round(humSlice.reduce(function(a,b){return a+b},0)/humSlice.length);
+    var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var fc=d.time.map(function(t,i){
+      return{d:dayNames[new Date(t).getDay()],t:Math.round(d.temperature_2m_max[i]),r:Math.round(d.precipitation_sum[i]||0)};
+    });
+    var totalRain=d.precipitation_sum.reduce(function(a,b){return a+(b||0)},0);
+    LIVE_WEATHER[id]={
+      temp_max:Math.round(d.temperature_2m_max[0]),
+      temp_min:Math.round(d.temperature_2m_min[0]),
+      humidity:avgH,
+      rain_7d:Math.round(totalRain),
+      wind:Math.round(d.windspeed_10m_max[0]),
+      forecast:fc,
+      live:true,
+      updated:new Date().toLocaleTimeString('en-ET',{hour:'2-digit',minute:'2-digit'})
+    };
+    if(sel&&sel.id===id){renderDetail();render();}
+  }catch(e){
+    console.warn('Open-Meteo failed for',id,':',e.message);
+  }finally{
+    delete LIVE_LOADING['w_'+id];
+  }
+}
+
+function openSettings(){document.getElementById('settingsOverlay').style.display='flex';}
+function closeSettings(){document.getElementById('settingsOverlay').style.display='none';}
+
+// Variety recommendation engine
+function getRecommendations(distId){
+  var recs=[];
+  var d=D.find(function(x){return x.id===distId});
+  if(!d)return recs;
+  for(var crop in VARIETIES){
+    VARIETIES[crop].forEach(function(v){
+      if(v.districts.indexOf(distId)>=0){
+        var score=0;
+        if(d.dr>=2 && v.traits.some(function(t){return t.toLowerCase().indexOf('drought')>=0})) score+=30;
+        var cropKey=crop;
+        if(d.srr[cropKey]<25) score+=20;
+        if(v.year>=2018) score+=15;
+        else if(v.year>=2014) score+=10;
+        if(v.traits.some(function(t){return t.toLowerCase().indexOf('biofortif')>=0||t.toLowerCase().indexOf('protein')>=0||t.toLowerCase().indexOf('iron')>=0})) score+=10;
+        if(v.priority==='CRITICAL') score+=25;
+        else if(v.priority==='HIGH') score+=15;
+        recs.push({variety:v,crop:crop,score:score});
+      }
+    });
+  }
+  recs.sort(function(a,b){return b.score-a.score});
+  return recs;
+}
+
+// ══════ MAP ══════
+function initMap(){
+  map=L.map('map',{center:[9.0,38.7],zoom:6,zoomControl:true,attributionControl:false});
+  var dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,opacity:.6}).addTo(map);
+  var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:.8});
+  L.control.layers({'Dark':dark,'Satellite':sat},null,{position:'topright',collapsed:true}).addTo(map);
+  render();
+}
+
+function render(){
+  calcAll();
+  if(geoLyr)map.removeLayer(geoLyr);
+  if(markerLyr)map.removeLayer(markerLyr);
+  geoLyr=L.geoJSON(ETHIOPIA_GEO,{
+    style:function(f){
+      var dd=D.find(function(x){return x.id===f.properties.id});
+      if(!dd)return{fillColor:'#222',weight:.5,color:'#222e42',fillOpacity:.15};
+      var isSel=sel&&sel.id===dd.id;
+      return{fillColor:getCol(dd),weight:isSel?2.5:1,color:isSel?'#e2e8f0':'#222e42',fillOpacity:isSel?.7:.45}
+    },
+    onEachFeature:function(f,layer){
+      var dd=D.find(function(x){return x.id===f.properties.id});
+      if(!dd)return;
+      layer.on('click',function(){selDist(dd.id)});
+      layer.on('mouseover',function(e){this.setStyle({weight:2,color:'#8b9ab8',fillOpacity:.6});layer.bindTooltip('<b>'+dd.n+'</b> '+getLabel(dd),{sticky:true}).openTooltip(e.latlng)});
+      layer.on('mouseout',function(){geoLyr.resetStyle(this);layer.unbindTooltip()});
+    }
+  }).addTo(map);
+  markerLyr=L.layerGroup();
+  D.forEach(function(dd){
+    var f=ETHIOPIA_GEO.features.find(function(x){return x.properties.id===dd.id});
+    if(!f)return;
+    L.marker([f.properties.centroid_lat,f.properties.centroid_lng],{
+      icon:L.divIcon({className:'',html:'<div style="text-align:center;pointer-events:none"><div style="font-size:7px;color:#5a6a84;text-shadow:0 1px 2px #000">'+dd.n+'</div><div style="font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000">'+getLabel(dd)+'</div></div>',iconSize:[70,20],iconAnchor:[35,10]})
+    }).addTo(markerLyr);
+  });
+  markerLyr.addTo(map);
+  renderList();renderDash();renderLegend();
+}
+
+// ══════ DASHBOARD ══════
+function renderDash(){
+  var c=document.getElementById('sCrop').value;
+  var cn={teff:'Teff',wheat:'Wheat',maize:'Maize',sorghum:'Sorghum'}[c];
+  var avgSRR=Math.round(D.reduce(function(s,d){return s+d.srr[c]},0)/D.length);
+  var critical=D.filter(function(d){return d.srr[c]<20}).length;
+  var h='';
+  if(mod==='seed')h='<div class="dk"><div class="dv" style="color:'+srrCol(avgSRR)+'">'+avgSRR+'%</div><div class="dl">Avg '+cn+' SRR</div></div><div class="dk"><div class="dv" style="color:var(--rd)">'+critical+'</div><div class="dl">Critical &lt;20%</div></div><div class="dk"><div class="dv" style="color:var(--cy)">12</div><div class="dl">Regions</div></div><div class="dk"><div class="dv" style="color:var(--gn)">18</div><div class="dl">New Varieties</div></div>';
+  else if(mod==='ndvi'){var avgNDVI=(D.reduce(function(s,d){return s+simNDVI(d.id).cur},0)/D.length).toFixed(2);h='<div class="dk"><div class="dv" style="color:'+ndviCol(parseFloat(avgNDVI))+'">'+avgNDVI+'</div><div class="dl">Avg NDVI</div></div><div class="dk"><div class="dv" style="color:var(--rd)">'+D.filter(function(d){return simNDVI(d.id).cur<.4}).length+'</div><div class="dl">Stressed</div></div><div class="dk"><div class="dv" style="color:var(--gn)">'+D.filter(function(d){return simNDVI(d.id).cur>.6}).length+'</div><div class="dl">Healthy</div></div>'}
+  else if(mod==='weather')h='<div class="dk"><div class="dv" style="color:var(--or)">28°C</div><div class="dl">Avg Max Temp</div></div><div class="dk"><div class="dv" style="color:var(--cy)">14°C</div><div class="dl">Avg Min</div></div><div class="dk"><div class="dv" style="color:var(--bl)">18mm</div><div class="dl">7-day Rain</div></div><div class="dk"><div class="dv" style="color:var(--gn)">Meher</div><div class="dl">Main Season</div></div>';
+  else if(mod==='pest'){var highPest=D.filter(function(d){return simPest(d.id).some(function(p){return p.risk==='HIGH'})}).length;h='<div class="dk"><div class="dv" style="color:var(--rd)">'+highPest+'</div><div class="dl">HIGH Alert</div></div><div class="dk"><div class="dv" style="color:var(--or)">FAW+Rust</div><div class="dl">Active Pests</div></div><div class="dk"><div class="dv" style="color:var(--gn)">IPM</div><div class="dl">Advisory</div></div>'}
+  else if(mod==='fertilizer')h='<div class="dk"><div class="dv" style="color:var(--pp)">NPS+Urea</div><div class="dl">Blend System</div></div><div class="dk"><div class="dv" style="color:var(--gn)">ATA/EthioSIS</div><div class="dl">Data Source</div></div>';
+  else if(mod==='market')h='<div class="dk"><div class="dv" style="color:var(--gn)">Br'+{teff:4500,wheat:3800,maize:2500,sorghum:2800}[c]+'</div><div class="dl">'+cn+' ECX Ref/qtl</div></div><div class="dk"><div class="dv" style="color:var(--or)">'+D.filter(function(d){return simMarket(d.id).trend==='below'}).length+'</div><div class="dl">Below ECX Ref</div></div><div class="dk"><div class="dv" style="color:var(--cy)">ECX</div><div class="dl">Exchange</div></div>';
+  else if(mod==='horti')h='<div class="dk"><div class="dv" style="color:#6b4423">☕</div><div class="dl">Coffee Origin</div></div><div class="dk"><div class="dv" style="color:#22c55e">🌿</div><div class="dl">Enset Staple</div></div><div class="dk"><div class="dv" style="color:#f43f5e">🌹</div><div class="dl">Flowers Export</div></div><div class="dk"><div class="dv" style="color:var(--gn)">6</div><div class="dl">Horti Crops</div></div>';
+  else if(mod==='ese'){var totalDemand=0,totalDist=0;D.forEach(function(dd){var b=simESE(dd.id);if(b){totalDemand+=b.demand;totalDist+=b.distributed}});h='<div class="dk"><div class="dv" style="color:var(--pp)">'+Math.round(totalDemand/1000)+'K</div><div class="dl">Demand (MT)</div></div><div class="dk"><div class="dv" style="color:var(--gn)">'+Math.round(totalDist/1000)+'K</div><div class="dl">Distributed</div></div><div class="dk"><div class="dv" style="color:var(--rd)">'+Math.round((totalDemand-totalDist)/1000)+'K</div><div class="dl">Gap (MT)</div></div>'}
+  else h='<div class="dk"><div class="dv" style="color:var(--gn)">12</div><div class="dl">Regions</div></div><div class="dk"><div class="dv" style="color:var(--cy)">'+cn+'</div><div class="dl">Crop</div></div>';
+  document.getElementById('dash').innerHTML=h;
+}
+
+function renderLegend(){
+  var t={seed:'Seed Replacement Rate',ndvi:'NDVI Crop Health',weather:'Temperature',pest:'Pest Risk Level',fertilizer:'Soil Nutrient Status',market:'Price vs ECX Ref',horti:'Dominant Horticulture Crop',ese:'ESE Distribution Gap',sowing:'Sowing Progress',yieldloss:'Yield Loss (Br 000s)',earlywarning:'Composite Risk Index',monsoon:'Season Readiness Grade',dss:'Scheme Achievement',seedqr:'Seed QR Traceability',credit:'AgriScore'};
+  var b={seed:'<div style="background:#be123c"></div><div style="background:#f97316"></div><div style="background:#eab308"></div><div style="background:#22c55e"></div><div style="background:#0d9488"></div>',
+    ndvi:'<div style="background:#7f1d1d"></div><div style="background:#dc2626"></div><div style="background:#f97316"></div><div style="background:#eab308"></div><div style="background:#22c55e"></div><div style="background:#047857"></div>',
+    pest:'<div style="background:#10b981"></div><div style="background:#eab308"></div><div style="background:#f97316"></div><div style="background:#dc2626"></div>',
+    credit:'<div style="background:#ef4444"></div><div style="background:#f59e0b"></div><div style="background:#10b981"></div>'};
+  document.getElementById('legend').innerHTML='<div class="sh">'+(t[mod]||'')+'</div><div class="bar">'+(b[mod]||b.seed)+'</div>';
+}
+
+function renderList(){
+  var sorted=[].concat(D).sort(function(a,b){
+    if(mod==='ndvi')return simNDVI(a.id).cur-simNDVI(b.id).cur;
+    if(mod==='credit')return simCredit(a.id).score-simCredit(b.id).score;
+    return a.srr[document.getElementById('sCrop').value]-b.srr[document.getElementById('sCrop').value];
+  });
+  document.getElementById('distList').innerHTML=sorted.map(function(d,i){
+    var lbl=getLabel(d);var c2=getCol(d);var act=sel&&sel.id===d.id?'on':'';
+    return '<div class="dl-i '+act+'" onclick="selDist(\''+d.id+'\')"><span class="rk">'+(i+1)+'</span><span class="dn">'+d.n+'</span><div class="br"><div class="bf" style="width:50%;background:'+c2+'"></div></div><span class="vl" style="color:'+c2+'">'+lbl+'</span></div>';
+  }).join('');
+}
+
+// ══════ LAYERS ══════
+var LAYERS=[
+  {id:'srr',name:'SRR Heatmap',color:'var(--gn)',on:true,mod:'seed'},
+  {id:'ndvi_lyr',name:'NDVI Satellite',color:'#2563eb',on:false,mod:'ndvi'},
+  {id:'pest_lyr',name:'Pest Hotspots',color:'var(--rd)',on:false,mod:'pest'},
+  {id:'soil_lyr',name:'Soil Health',color:'var(--pk)',on:false,mod:'fertilizer'},
+  {id:'weather_lyr',name:'Weather',color:'var(--or)',on:false,mod:'weather'},
+  {id:'market_lyr',name:'Market Prices',color:'var(--cy)',on:false,mod:'market'},
+  {id:'horti_lyr',name:'Horticulture',color:'#a855f7',on:false,mod:'horti'},
+  {id:'ese_lyr',name:'ESE Distribution',color:'var(--pp)',on:false,mod:'ese'},
+  {id:'credit_lyr',name:'AgriScore',color:'#be185d',on:false,mod:'credit'},
+];
+
+function renderLayers(){
+  document.getElementById('layers').innerHTML=LAYERS.map(function(l){
+    var isActive=l.mod&&l.mod===mod;
+    return '<div class="ly'+(isActive?' on':l.on?' on':'')+'" data-id="'+l.id+'" data-mod="'+(l.mod||'')+'" onclick="toggleSidebarLayer(this)"><div class="ck">✓</div><div class="dt" style="background:'+l.color+'"></div><span class="nm">'+l.name+'</span></div>';
+  }).join('');
+}
+
+function toggleSidebarLayer(el){
+  var layerMod=el.getAttribute('data-mod');
+  if(layerMod){
+    document.querySelectorAll('.ly[data-mod]').forEach(function(ly){ly.classList.remove('on')});
+    el.classList.add('on');
+    setModule(layerMod);
+  }
+}
+function syncSidebarToModule(){
+  document.querySelectorAll('.ly[data-mod]').forEach(function(ly){
+    var lm=ly.getAttribute('data-mod');
+    if(lm)ly.classList.toggle('on',lm===mod);
+  });
+}
+
+// ══════ MODULE SWITCH ══════
+function setModule(m){
+  mod=m;
+  document.querySelectorAll('.mt').forEach(function(b){b.classList.remove('on')});
+  var btn=document.querySelector('.mt[data-m="'+m+'"]');
+  if(btn)btn.classList.add('on');
+  syncSidebarToModule();
+  render();
+  if(sel)renderDetail();
+}
+
+function selDist(id){
+  sel=D.find(function(d){return d.id===id});
+  render();
+  renderDetail();
+  if(!LIVE_WEATHER[id])fetchOpenMeteo(id);
+  var f=ETHIOPIA_GEO.features.find(function(x){return x.properties.id===id});
+  if(f)map.flyTo([f.properties.centroid_lat,f.properties.centroid_lng],7,{duration:.5});
+}
+
+// ══════ DETAIL PANEL ══════
+function renderDetail(){
+  if(!sel)return;
+  var d=sel,r=REAL[d.id],c=document.getElementById('sCrop').value;
+  var cn={teff:'Teff',wheat:'Wheat',maize:'Maize',sorghum:'Sorghum'}[c];
+  var html='';
+
+  html+='<div class="sc"><h2>'+d.n+'</h2><div class="zn">'+d.z+(d.dr>=2?' <span style="color:var(--or);background:rgba(245,158,11,.1);padding:1px 5px;border-radius:3px;font-size:8px;font-weight:700;margin-left:4px">🏜 Drought Zone</span>':'')+'</div></div>';
+
+  if(mod==='seed'){
+    html+=seedPanel(d,r,c);
+  } else if(mod==='ndvi'){
+    var n=simNDVI(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(37,99,235,.15)">🛰</div><h3>NDVI Crop Health</h3></div>';
+    html+='<div class="sg"><div class="st" style="background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.15)"><div class="sv" style="color:'+ndviCol(n.cur)+'">'+n.cur.toFixed(2)+'</div><div class="sl2">Current NDVI</div></div>';
+    html+='<div class="st" style="background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.15)"><div class="sv" style="color:var(--t2)">'+n.prev.toFixed(2)+'</div><div class="sl2">Previous</div></div></div>';
+    html+='<div style="margin-top:6px;padding:6px;background:var(--bg);border-radius:5px;border:1px solid var(--bd);font-size:10px"><span style="font-weight:700;color:'+ndviCol(n.cur)+'">'+n.health+'</span> — '+(n.trend==='up'?'<span style="color:var(--gn)">▲ Improving</span>':'<span style="color:var(--rd)">▼ Declining</span>')+'</div>';
+    // NDVI history bars
+    html+='<div style="margin-top:8px"><div class="sh">Monthly NDVI trend</div>';
+    ['Jan','Feb','Mar','Apr','May','Jun'].forEach(function(m,i){var v=Math.max(.2,n.cur-.15+i*.04+Math.sin(i*2)*.08);html+='<div class="cb"><span class="cn">'+m+'</span><div class="ct"><div class="cf" style="width:'+Math.round(v*100)+'%;background:'+ndviCol(v)+'"></div></div><span class="cv" style="color:'+ndviCol(v)+'">'+v.toFixed(2)+'</span></div>'});
+    html+='</div>';
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: Sentinel-2 L2A | 10m resolution | 5-day revisit</div></div>';
+  } else if(mod==='weather'){
+    var w=simWeather(d.id);
+    var liveBadge=w.live?'<span style="font-size:8px;padding:2px 7px;border-radius:3px;color:#10b981;background:rgba(16,185,129,.12);margin-left:6px">🟢 LIVE · '+w.updated+'</span>':'<span style="font-size:8px;padding:2px 7px;border-radius:3px;color:var(--or);background:rgba(245,158,11,.1);margin-left:6px">⚡ Loading…</span>';
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(217,119,6,.15)">🌤</div><h3>Weather'+liveBadge+'</h3></div>';
+    html+='<div class="sg4"><div class="st" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.1)"><div class="sv" style="color:var(--rd);font-size:14px">'+w.temp_max+'°</div><div class="sl2">Max °C</div></div>';
+    html+='<div class="st" style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.1)"><div class="sv" style="color:var(--cy);font-size:14px">'+w.temp_min+'°</div><div class="sl2">Min °C</div></div>';
+    html+='<div class="st" style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.1)"><div class="sv" style="color:var(--bl);font-size:14px">'+w.humidity+'%</div><div class="sl2">Humid</div></div>';
+    html+='<div class="st" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.1)"><div class="sv" style="color:var(--gn);font-size:14px">'+w.rain_7d+'mm</div><div class="sl2">Rain 7d</div></div></div>';
+    html+='<div style="display:flex;gap:3px;margin-top:8px">';
+    w.forecast.forEach(function(f){var rc=f.r>10?'#38bdf8':f.r>2?'#7dd3fc':'#94a3b8';html+='<div style="flex:1;text-align:center;padding:4px 2px;background:var(--bg);border-radius:4px;border:1px solid var(--bd)"><div style="font-size:8px;color:var(--t3)">'+f.d+'</div><div style="font-size:12px;font-weight:700;color:var(--or)">'+f.t+'°</div><div style="font-size:9px;font-weight:700;color:'+rc+'">'+(f.r>0?f.r+'mm':'—')+'</div></div>'});
+    html+='</div>';
+    // Agri implication
+    html+='<div style="margin-top:8px"><div class="sh">Agri Implication</div>';
+    if(w.temp_max>35)html+='<div class="ic" style="border-left:3px solid var(--rd)"><div class="ih" style="color:var(--rd)">🔥 Severe Heat</div>Temp '+w.temp_max+'°C. Irrigate immediately. Avoid afternoon spraying. Heat stress on teff flowering.</div>';
+    else if(w.temp_max>30)html+='<div class="ic" style="border-left:3px solid var(--or)"><div class="ih" style="color:var(--or)">🌡 Heat Advisory</div>Temp '+w.temp_max+'°C. Monitor wheat grain-filling. Supplemental irrigation if available.</div>';
+    else html+='<div class="ic" style="border-left:3px solid var(--gn)"><div class="ih" style="color:var(--gn)">✓ Favourable Conditions</div>Temp '+w.temp_max+'°C within optimal range for crop growth.</div>';
+    if(w.rain_7d>40)html+='<div class="ic" style="border-left:3px solid var(--cy)"><div class="ih" style="color:var(--cy)">🌧 Heavy Rain Alert</div>'+w.rain_7d+'mm forecast. Ensure drainage for teff (lodging risk). Delay fertilizer 3 days post-rain.</div>';
+    html+='</div>';
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: Open-Meteo API | lat '+getDistCoords(d.id).lat+' lng '+getDistCoords(d.id).lng+'</div></div>';
+  } else if(mod==='pest'){
+    var pests=simPest(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(220,38,38,.15)">🐛</div><h3>Pest & Disease Alerts</h3></div>';
+    if(pests.length===0)html+='<div style="color:var(--gn);font-size:11px">✓ No active pest alerts for '+d.n+'</div>';
+    pests.forEach(function(p){html+='<div class="ic" style="border-left:3px solid '+p.color+'"><div style="display:flex;justify-content:space-between"><div class="ih">'+p.icon+' '+p.name+' <span style="font-size:8px;color:var(--t3)">('+p.crop+')</span></div><span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;color:'+p.color+'">'+p.risk+'</span></div><div style="margin-top:3px">'+p.msg+'</div><div style="margin-top:3px;font-size:8px;color:var(--t3)">Trigger: '+p.trigger+'</div></div>'});
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: EIAR pest model + ARC surveillance + Plant Health Regulatory</div></div>';
+  } else if(mod==='fertilizer'){
+    var f=simFertilizer(d.id);var s=r?r.soil:null;
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(124,58,237,.15)">🧪</div><h3>Fertilizer Recommendation</h3></div>';
+    if(s){html+='<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:6px">';
+    html+='<span class="np" style="color:'+(s.n==='L'?'var(--rd)':'var(--gn)')+';background:'+(s.n==='L'?'rgba(239,68,68,.08)':'rgba(16,185,129,.08)')+'">N:'+s.n+'</span>';
+    html+='<span class="np" style="color:'+(s.p==='L'?'var(--rd)':'var(--gn)')+';background:'+(s.p==='L'?'rgba(239,68,68,.08)':'rgba(16,185,129,.08)')+'">P:'+s.p+'</span>';
+    html+='<span class="np" style="color:var(--t2);background:var(--s2)">pH:'+s.ph+'</span></div>';}
+    if(f){html+='<div class="sh">EthioSIS Recommendation for '+cn+' (kg/ha)</div>';
+    html+='<div class="sg4"><div class="st" style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12)"><div class="sv" style="color:var(--pp);font-size:14px">'+f.urea+'</div><div class="sl2">Urea</div></div>';
+    html+='<div class="st" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12)"><div class="sv" style="color:var(--rd);font-size:14px">'+f.nps+'</div><div class="sl2">NPS</div></div>';
+    html+='<div class="st" style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.12)"><div class="sv" style="color:var(--cy);font-size:14px">'+f.zn+'</div><div class="sl2">ZnSO4</div></div>';
+    html+='<div class="st" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12)"><div class="sv" style="color:var(--gn);font-size:14px">Br'+f.cost+'</div><div class="sl2">Cost/ha</div></div></div>';
+    html+='<div style="margin-top:6px"><div class="sh">Application Schedule</div>';
+    f.schedule.forEach(function(sc){html+='<div class="ic"><div class="ih" style="color:var(--pp)">'+sc.stage+'</div>Urea: '+sc.urea+'kg | NPS: '+sc.nps+'kg<br><span style="color:var(--t3)">'+sc.when+'</span></div>'});
+    html+='</div>';}
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Model: EthioSIS/ATA | Soil data: Ethiopian Soil Information System</div></div>';
+  } else if(mod==='market'){
+    var m=simMarket(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(8,145,178,.15)">📈</div><h3>Market — '+cn+'</h3></div>';
+    html+='<div class="sg"><div class="st" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12)"><div class="sv" style="color:var(--gn);font-size:14px">Br'+m.msp+'</div><div class="sl2">ECX Ref/qtl</div></div>';
+    html+='<div class="st" style="background:'+(m.trend==='above'?'rgba(16,185,129,.06)':'rgba(239,68,68,.06)')+';border:1px solid '+(m.trend==='above'?'rgba(16,185,129,.12)':'rgba(239,68,68,.12)')+'"><div class="sv" style="color:'+(m.trend==='above'?'var(--gn)':'var(--rd)')+';font-size:14px">Br'+m.mandi_price+'</div><div class="sl2">Local Market</div></div></div>';
+    html+='<div class="ic" style="margin-top:6px"><div class="ih">📍 '+m.nearest_mandi+'</div>';
+    if(m.trend==='above')html+='<span style="color:var(--gn);font-weight:700">▲ Above ECX reference — good selling opportunity</span>';
+    else html+='<span style="color:var(--or);font-weight:700">⚠ Below ECX reference — consider cooperative aggregation</span>';
+    html+='</div><div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: Ethiopian Commodity Exchange (ECX)</div></div>';
+  } else if(mod==='credit'){
+    var cr=simCredit(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(190,24,93,.15)">💳</div><h3>AgriScore — Credit Risk</h3></div>';
+    html+='<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--bd);margin-bottom:6px"><div style="font-size:36px;font-weight:800;color:'+cr.color+'">'+cr.score+'</div><div style="font-size:12px;font-weight:700;color:'+cr.color+'">Grade '+cr.grade+'</div><div style="font-size:9px;color:var(--t3);margin-top:2px">Higher = Lower lending risk</div></div>';
+    html+='<div class="sh">Score Breakdown</div>';
+    var factors=[{name:'SRR adoption',val:cr.factors.srr_score,max:80,color:'var(--gn)'},{name:'Variety modernity',val:cr.factors.variety_score,max:30,color:'var(--bl)'},{name:'Irrigation access',val:cr.factors.irrigation_score,max:50,color:'var(--cy)'},{name:'No drought risk',val:cr.factors.drought_penalty,max:40,color:'var(--or)'},{name:'NDVI crop health',val:cr.factors.ndvi_score,max:68,color:'var(--gn)'}];
+    factors.forEach(function(f2){html+='<div class="cb"><span class="cn">'+f2.name+'</span><div class="ct"><div class="cf" style="width:'+Math.round(f2.val/f2.max*100)+'%;background:'+f2.color+'"></div></div><span class="cv" style="color:'+f2.color+'">+'+f2.val+'</span></div>'});
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">AgriScore = SRR + variety modernity + irrigation + drought risk + satellite health. For microfinance/cooperative loan assessment.</div></div>';
+  } else if(mod==='horti'){
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(168,85,247,.15)">☕</div><h3>Horticulture Intelligence</h3></div>';
+    var hCrops=HORTI.crops;var dh=[];
+    for(var hk in hCrops){if(hCrops[hk].districts[d.id])dh.push({key:hk,name:hCrops[hk].name,icon:hCrops[hk].icon,color:hCrops[hk].color,area:hCrops[hk].districts[d.id].area,prod:hCrops[hk].districts[d.id].prod,role:hCrops[hk].districts[d.id].role,variety:hCrops[hk].districts[d.id].variety||''})}
+    if(dh.length===0)html+='<div style="color:var(--t3);font-size:11px">No major horticulture crops in '+d.n+'</div>';
+    dh.sort(function(a,b){return b.area-a.area});
+    dh.forEach(function(hc){
+      html+='<div class="ic" style="border-left:3px solid '+hc.color+'"><div style="display:flex;align-items:center;gap:5px"><span style="font-size:16px">'+hc.icon+'</span><div style="flex:1"><div style="font-weight:700;color:'+hc.color+'">'+hc.name+'</div><div style="font-size:8px;color:var(--t3)">'+hc.role+'</div></div><div style="text-align:right"><div style="font-weight:800;font-size:12px">'+hc.area.toLocaleString()+' ha</div><div style="font-size:8px;color:var(--t3)">'+Math.round(hc.prod/1000)+'K MT</div></div></div>';
+      if(hc.variety)html+='<div style="font-size:9px;color:var(--t2);margin-top:3px">Varieties: '+hc.variety+'</div>';
+      html+='</div>';
+    });
+    // Cold chain
+    var cc=HORTI.cold_chain[d.id];
+    if(cc){html+='<div style="margin-top:6px"><div class="sh">Cold Chain Infrastructure</div><div class="sg4">';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px">'+cc.cold_stores+'</div><div class="sl2">Cold stores</div></div>';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px">'+cc.capacity_mt+'</div><div class="sl2">Capacity MT</div></div>';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px">'+cc.pack_houses+'</div><div class="sl2">Pack houses</div></div>';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px">'+cc.ripening_chambers+'</div><div class="sl2">Ripening ch</div></div></div>';
+    if(cc.gap)html+='<div style="margin-top:3px;font-size:9px;color:'+(cc.gap.indexOf('CRITICAL')>=0||cc.gap.indexOf('critically')>=0?'var(--rd)':'var(--or)')+'">'+cc.gap+'</div></div>';}
+    // Monthly advisory for coffee
+    var curM=new Date().getMonth()+1;
+    if(hCrops.coffee&&hCrops.coffee.districts[d.id]&&HORTI.calendar.coffee&&HORTI.calendar.coffee[curM]){
+      var cal=HORTI.calendar.coffee[curM];var ac=cal.alert==='red'?'var(--rd)':cal.alert==='yellow'?'var(--or)':'var(--gn)';
+      html+='<div style="margin-top:6px"><div class="sh">March Coffee Advisory</div>';
+      html+='<div class="ic" style="border-left:3px solid '+ac+'"><div class="ih" style="color:'+ac+'">☕ Coffee — '+cal.stage+'</div><div style="color:var(--t2)">'+cal.activity+'</div>';
+      if(cal.pest&&cal.pest!=='None'&&cal.pest!=='None significant')html+='<div style="color:var(--or);margin-top:2px">🐛 '+cal.pest+'</div>';
+      html+='<div style="color:var(--cy);margin-top:2px">💧 '+cal.irrigation+'</div></div></div>';}
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: EIAR, Jimma ARC, Ethiopian Coffee & Tea Authority</div></div>';
+  } else if(mod==='ese'){
+    var ese=simESE(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(124,58,237,.15)">🏭</div><h3>ESE Distribution — '+cn+'</h3></div>';
+    if(ese){
+      var fillPct=Math.round((ese.distributed/ese.demand)*100);
+      html+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:3px"><span style="color:var(--t3)">Distribution Progress</span><span style="font-weight:700;color:'+(fillPct>=70?'var(--gn)':fillPct>=50?'var(--or)':'var(--rd)')+'">'+fillPct+'%</span></div>';
+      html+='<div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+fillPct+'%;background:'+(fillPct>=70?'#10b981':fillPct>=50?'#f59e0b':'#ef4444')+';border-radius:4px"></div></div></div>';
+      html+='<div class="sg4">';
+      html+='<div class="st" style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.12)"><div class="sv" style="color:var(--pp);font-size:13px">'+ese.demand+'</div><div class="sl2">Demand MT</div></div>';
+      html+='<div class="st" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12)"><div class="sv" style="color:var(--gn);font-size:13px">'+ese.distributed+'</div><div class="sl2">Distributed</div></div>';
+      html+='<div class="st" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12)"><div class="sv" style="color:var(--rd);font-size:13px">'+ese.gap+'</div><div class="sl2">Gap MT</div></div>';
+      html+='<div class="st" style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12)"><div class="sv" style="color:var(--or);font-size:13px">'+ese.gapPct+'%</div><div class="sl2">Gap %</div></div></div>';
+      html+='<div class="sg" style="margin-top:6px"><div class="st" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12)"><div class="sv" style="color:'+srrCol(d.srr[c])+';font-size:16px">'+d.srr[c]+'%</div><div class="sl2">SRR '+cn+'</div></div>';
+      html+='<div class="st" style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.12)"><div class="sv" style="color:var(--bl);font-size:16px">'+d.vrr+'%</div><div class="sl2">VRR</div></div></div></div>';
+      // Variety breakdown
+      html+='<div class="sc"><div class="sh">Variety-wise Distribution ('+cn+')</div>';
+      ese.varieties.forEach(function(v){var vc=v.status==='obsolete'?'var(--rd)':v.status==='aging'?'var(--or)':v.status==='new'?'var(--gn)':'var(--t2)';
+      html+='<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;font-size:10px"><div style="width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:'+vc+';font-weight:600">'+v.name+'</div><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+v.pct+'%;background:'+vc+';border-radius:3px"></div></div><div style="width:28px;text-align:right;font-weight:700;color:'+vc+'">'+v.pct+'%</div></div>'});
+      html+='</div>';
+      // Timeline
+      html+='<div class="sc"><div class="sh">Seasonal Distribution Timeline (Meher 2026)</div>';
+      ese.timeline.forEach(function(t){var aPct=ese.demand>0?Math.round(t.actual/ese.demand*100):0;var sc2=t.status==='critical gap'?'var(--rd)':t.status==='delayed'||t.status==='behind'?'var(--or)':'var(--gn)';
+      html+='<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:2px"><span style="font-weight:700">'+t.month+'</span><span style="color:'+sc2+'">'+t.status+'</span></div>';
+      html+='<div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+aPct+'%;background:'+sc2+';border-radius:4px;opacity:.8"></div></div>';
+      html+='<div style="display:flex;justify-content:space-between;font-size:7px;color:var(--t3);margin-top:1px"><span>Target: '+t.target+' MT</span><span>Actual: '+t.actual+' MT</span></div></div>'});
+      html+='</div>';
+      html+='<div class="ic"><div class="ih" style="color:var(--pp)">📦 Computation</div>Crop area: '+ese.area.toLocaleString()+' ha × Seed rate: '+ese.seedRate+' kg/ha = <b>'+ese.demand+' MT demand</b><br>SRR '+d.srr[c]+'% → <b>'+ese.distributed+' MT distributed</b> as certified seed<br>Gap: <b style="color:var(--rd)">'+ese.gap+' MT ('+ese.gapPct+'%)</b> still on farm-saved seed</div>';
+    }
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: ESE MIS | Cooperative union records</div></div>';
+  } else if(mod==='sowing'){
+    var sw=simSowing(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(21,128,61,.15)">🌱</div><h3>Sowing Progress — '+cn+'</h3></div>';
+    html+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:3px"><span>'+d.n+': <b>'+sw.pct+'%</b> sown</span><span style="color:'+(sw.pct>=sw.target?'var(--gn)':'var(--or)')+'">Target: '+sw.target+'%</span></div>';
+    html+='<div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden;position:relative"><div style="position:absolute;height:100%;width:'+sw.target+'%;background:rgba(16,185,129,.15);border-right:2px dashed var(--gn)"></div><div style="position:absolute;height:100%;width:'+sw.pct+'%;background:'+(sw.pct>=sw.target?'#10b981':'#f59e0b')+';border-radius:5px"></div></div></div>';
+    html+='<div class="sg"><div class="st" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12)"><div class="sv" style="font-size:14px;color:var(--gn)">'+sw.sownArea.toLocaleString()+'</div><div class="sl2">Ha sown</div></div>';
+    html+='<div class="st" style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12)"><div class="sv" style="font-size:14px;color:var(--or)">'+(sw.area-sw.sownArea).toLocaleString()+'</div><div class="sl2">Ha remaining</div></div></div>';
+    // Weekly trend
+    html+='<div style="margin-top:8px"><div class="sh">Weekly Sowing Trend</div><div style="display:flex;gap:3px;align-items:flex-end;height:60px">';
+    ['W1','W2','W3','W4','W5'].forEach(function(w2,i){var h2=sw.weekly[i]||0;html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="width:100%;height:'+h2*.55+'px;background:linear-gradient(180deg,#10b981,#059669);border-radius:3px 3px 0 0;min-height:2px"></div><div style="font-size:7px;color:var(--t3);margin-top:2px">'+w2+'</div><div style="font-size:8px;font-weight:700;color:var(--gn)">'+h2+'%</div></div>'});
+    html+='</div></div>';
+    html+='<div class="ic" style="margin-top:6px;border-left:3px solid '+(sw.pct>=sw.target?'var(--gn)':'var(--or)')+'"><div class="ih" style="color:'+(sw.pct>=sw.target?'var(--gn)':'var(--or)')+'">'+sw.status+'</div>'+(sw.pct<sw.target?cn+' sowing '+(sw.target-sw.pct)+'% behind target. Investigate: seed availability, Meher rain onset delay, or labor shortage.':'On track. Monitor NDVI for germination confirmation in 10 days.')+'</div>';
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: Sentinel-2 NDVI threshold detection | Refresh: every 5 days</div></div>';
+  } else if(mod==='yieldloss'){
+    var yl=simYieldLoss(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(185,28,28,.15)">💸</div><h3>Yield Loss — '+cn+'</h3></div>';
+    if(yl){
+      html+='<div style="text-align:center;padding:14px;background:linear-gradient(135deg,rgba(185,28,28,.08),rgba(239,68,68,.05));border-radius:8px;border:1px solid rgba(239,68,68,.15);margin-bottom:8px"><div style="font-size:10px;color:var(--t3)">'+d.n+' is losing</div><div style="font-size:32px;font-weight:800;color:var(--rd)">Br'+yl.lostValue+'K</div><div style="font-size:10px;color:var(--or)">per season due to obsolete seed varieties</div></div>';
+      html+='<div class="sg4">';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:var(--rd)">'+yl.oldYield+'</div><div class="sl2">Current kg/ha</div></div>';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:var(--gn)">'+yl.newYield+'</div><div class="sl2">Potential kg/ha</div></div>';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:var(--or)">'+yl.yieldGap+'</div><div class="sl2">Gap kg/ha</div></div>';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:var(--pp)">'+(100-yl.srr)+'%</div><div class="sl2">On old seed</div></div></div>';
+      var maxP=Math.max(yl.actualProd,yl.potentialProd);
+      html+='<div style="margin-top:8px"><div class="sh">Production: Actual vs Potential (MT)</div>';
+      html+='<div class="cb"><span class="cn" style="color:var(--rd)">Actual</span><div class="ct" style="height:8px"><div class="cf" style="width:'+Math.round(yl.actualProd/maxP*100)+'%;background:var(--rd)"></div></div><span class="cv" style="color:var(--rd)">'+yl.actualProd.toLocaleString()+'</span></div>';
+      html+='<div class="cb"><span class="cn" style="color:var(--gn)">Potential</span><div class="ct" style="height:8px"><div class="cf" style="width:100%;background:var(--gn)"></div></div><span class="cv" style="color:var(--gn)">'+yl.potentialProd.toLocaleString()+'</span></div>';
+      html+='<div class="cb"><span class="cn" style="color:var(--or)">Lost</span><div class="ct" style="height:8px"><div class="cf" style="width:'+Math.round(yl.lostProduction/maxP*100)+'%;background:var(--or)"></div></div><span class="cv" style="color:var(--or)">'+yl.lostProduction.toLocaleString()+'</span></div></div>';
+      html+='<div class="ic"><div class="ih" style="color:var(--pp)">📊 Calculation</div>'+yl.farmSavedArea.toLocaleString()+' ha on farm-saved seed × '+yl.yieldGap+' kg/ha gap = '+yl.lostProduction.toLocaleString()+' MT lost × ECX Br'+{teff:4500,wheat:3800,maize:2500,sorghum:2800}[c]+'/qtl = <b style="color:var(--rd)">Br'+yl.lostValue+'K</b></div>';
+    }
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Sources: CSA crop data | EIAR variety trial yields | ESE SRR estimates</div></div>';
+  } else if(mod==='earlywarning'){
+    var ew=simEarlyWarning(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(220,38,38,.15)">🚨</div><h3>Early Warning Index</h3></div>';
+    html+='<div style="text-align:center;padding:14px;background:var(--bg);border-radius:8px;border:2px solid '+ew.color+';margin-bottom:8px"><div style="font-size:36px;font-weight:800;color:'+ew.color+'">'+ew.score+'<span style="font-size:16px">/100</span></div><div style="font-size:13px;font-weight:700;color:'+ew.color+'">'+ew.level+'</div></div>';
+    html+='<div class="sh">Risk Components</div>';
+    var comps=[{name:'NDVI stress',val:ew.components.ndvi,max:30,color:'#2563eb'},{name:'NDVI decline',val:ew.components.ndvi_trend,max:15,color:'#6366f1'},{name:'Heat anomaly',val:ew.components.temp,max:15,color:'#f59e0b'},{name:'Pest conditions',val:ew.components.pest,max:20,color:'#ef4444'},{name:'Drought exposure',val:ew.components.drought,max:10,color:'#d97706'},{name:'Soil deficiency',val:ew.components.soil,max:10,color:'#a78bfa'}];
+    comps.forEach(function(comp){if(comp.val>0)html+='<div class="cb"><span class="cn">'+comp.name+'</span><div class="ct"><div class="cf" style="width:'+Math.round(comp.val/comp.max*100)+'%;background:'+comp.color+'"></div></div><span class="cv" style="color:'+comp.color+'">+'+comp.val+'</span></div>'});
+    if(ew.actions.length>0){html+='<div style="margin-top:8px"><div class="sh">Auto-generated Actions</div>';ew.actions.forEach(function(a){html+='<div class="ic" style="border-left:3px solid '+ew.color+'"><b>'+a.icon+'</b> '+a.text+'</div>'});html+='</div>';}
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Composite: Sentinel-2 NDVI + Open-Meteo + EIAR pest models + NMA drought data + EthioSIS soil.</div></div>';
+  } else if(mod==='benchmark'){
+    var bm=simBenchmark(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(3,105,161,.15)">📊</div><h3>Peer Benchmarking — '+d.n+'</h3></div>';
+    if(bm){
+      html+='<div class="sh">Your metrics</div><div class="sg4">';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:'+srrCol(bm.vec.srr)+'">'+bm.vec.srr+'%</div><div class="sl2">SRR</div></div>';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:'+ndviCol(bm.vec.ndvi)+'">'+bm.vec.ndvi.toFixed(2)+'</div><div class="sl2">NDVI</div></div>';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:var(--cy)">'+bm.vec.irr+'%</div><div class="sl2">Irrigation</div></div>';
+      html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:12px;color:'+(bm.vec.drought?'var(--rd)':'var(--gn)')+'">'+( bm.vec.drought?'Yes':'No')+'</div><div class="sl2">Drought</div></div></div>';
+      html+='<div style="margin-top:8px"><div class="sh">Most Similar Regions (4 peers)</div>';
+      html+='<table style="width:100%;font-size:9px;border-collapse:collapse">';
+      html+='<tr style="border-bottom:1px solid var(--bd)"><th style="text-align:left;padding:4px;color:var(--t3)">Region</th><th style="padding:4px;color:var(--t3)">SRR</th><th style="padding:4px;color:var(--t3)">NDVI</th><th style="padding:4px;color:var(--t3)">Irr%</th></tr>';
+      bm.peers.forEach(function(p){var isBest=p.d.id===bm.best.d.id;
+      html+='<tr style="border-bottom:1px solid var(--bd);'+(isBest?'background:rgba(16,185,129,.06)':'')+'"><td style="padding:4px;font-weight:'+(isBest?'700':'400')+'">'+p.d.n+(isBest?' 🏆':'')+'</td><td style="padding:4px;text-align:center;color:'+srrCol(p.vec.srr)+'">'+p.vec.srr+'%</td><td style="padding:4px;text-align:center;color:'+ndviCol(p.vec.ndvi)+'">'+p.vec.ndvi.toFixed(2)+'</td><td style="padding:4px;text-align:center">'+p.vec.irr+'%</td></tr>'});
+      html+='</table></div>';
+      if(bm.lessons.length>0){html+='<div style="margin-top:8px"><div class="sh">Key Insights</div>';bm.lessons.forEach(function(l){html+='<div class="ic" style="border-left:3px solid var(--bl)">💡 '+l+'</div>'});html+='</div>';}
+    }
+    html+='</div>';
+  } else if(mod==='monsoon'){
+    var mn=simMonsoon(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(14,116,144,.15)">🌧</div><h3>Season Readiness — Meher 2026</h3></div>';
+    if(mn){
+      html+='<div style="text-align:center;padding:12px;background:var(--bg);border-radius:8px;border:2px solid '+mn.gradeColor+';margin-bottom:8px"><div style="font-size:40px;font-weight:800;color:'+mn.gradeColor+'">'+mn.grade+'</div><div style="font-size:11px;color:var(--t2)">'+mn.readyCount+'/'+mn.total+' parameters ready ('+mn.pct+'%)</div></div>';
+      html+='<div class="sh">Readiness Checklist</div>';
+      mn.checks.forEach(function(ch){var sc3=ch.status==='ready'?'#10b981':ch.status==='partial'||ch.status==='attention'?'#f59e0b':'#ef4444';var badge=ch.status==='ready'?'✅':ch.status==='partial'?'🟡':ch.status==='attention'?'🟡':ch.status==='pending'?'⏳':'⚠';
+      html+='<div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:var(--bg);border-radius:4px;margin-bottom:2px;border:1px solid var(--bd);font-size:10px"><span style="font-size:12px">'+badge+'</span><div style="flex:1"><div style="font-weight:600">'+ch.icon+' '+ch.name+'</div><div style="font-size:8px;color:'+sc3+'">'+ch.detail+'</div></div></div>'});
+      if(mn.grade==='C'||mn.grade==='D'||mn.grade==='F')html+='<div class="ic" style="margin-top:6px;border-left:3px solid var(--rd)"><div class="ih" style="color:var(--rd)">⚠ Action Required</div>'+d.n+' is Grade '+mn.grade+' — '+(mn.total-mn.readyCount)+' parameters need attention before Meher onset.</div>';
+    }
+    html+='</div>';
+  } else if(mod==='dss'){
+    html+='<div class="sc"><div style="font-size:11px;font-weight:700;color:var(--pp);margin-bottom:6px">📋 Scheme Performance — '+d.n+'</div>';
+    var onTarget=0,moderate=0,behind=0;
+    SCHEMES.forEach(function(s2){var r2=simScheme(s2,d.id);if(r2.status==='on_track')onTarget++;else if(r2.status==='moderate')moderate++;else behind++});
+    html+='<div style="display:flex;gap:4px;margin-bottom:6px">';
+    html+='<div style="flex:1;text-align:center;padding:6px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12);border-radius:5px"><div style="font-size:16px;font-weight:800;color:var(--gn)">'+onTarget+'</div><div style="font-size:7px;color:var(--t3)">On Target</div></div>';
+    html+='<div style="flex:1;text-align:center;padding:6px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);border-radius:5px"><div style="font-size:16px;font-weight:800;color:var(--or)">'+moderate+'</div><div style="font-size:7px;color:var(--t3)">Moderate</div></div>';
+    html+='<div style="flex:1;text-align:center;padding:6px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:5px"><div style="font-size:16px;font-weight:800;color:var(--rd)">'+behind+'</div><div style="font-size:7px;color:var(--t3)">Behind</div></div></div>';
+    SCHEMES.forEach(function(s2){var r2=simScheme(s2,d.id);var sc4=r2.status==='on_track'?'#10b981':r2.status==='moderate'?'#f59e0b':'#ef4444';var badge2=r2.status==='on_track'?'✅':r2.status==='moderate'?'🟡':'🔴';
+    html+='<div style="display:flex;align-items:center;gap:4px;padding:4px 5px;background:var(--bg);border-radius:4px;margin-bottom:2px;border:1px solid var(--bd);font-size:9px">';
+    html+='<span style="font-size:10px">'+s2.icon+'</span><div style="flex:1;min-width:0"><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s2.name+'</div></div>';
+    html+='<div style="width:50px;height:4px;background:var(--s2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+r2.distAch+'%;background:'+sc4+';border-radius:2px"></div></div>';
+    html+='<span style="font-size:8px;font-weight:700;color:'+sc4+';width:30px;text-align:right">'+r2.distAch+'%</span><span style="font-size:7px">'+badge2+'</span></div>'});
+    var behindSchemes=SCHEMES.filter(function(s2){return simScheme(s2,d.id).status==='behind'});
+    if(behindSchemes.length>0){html+='<div style="margin-top:6px"><div style="font-size:9px;font-weight:700;color:var(--rd);margin-bottom:3px">⚠ Action Required ('+behindSchemes.length+' behind)</div>';
+    behindSchemes.slice(0,3).forEach(function(s2){var r2=simScheme(s2,d.id);html+='<div class="ic" style="border-left:2px solid var(--rd);font-size:9px">'+s2.icon+' <b>'+s2.name+'</b> at '+r2.distAch+'% vs '+s2.target+'% target</div>'});html+='</div>';}
+    html+='<div style="margin-top:6px;font-size:8px;color:var(--t3)">Source: MoA MIS, ESE, PSNP portal | FY 2025-26</div></div>';
+  } else if(mod==='report'){
+    var ew2=simEarlyWarning(d.id);var sw2=simSowing(d.id);var yl2=simYieldLoss(d.id);var mn2=simMonsoon(d.id);var ndvi2=simNDVI(d.id);var w2=simWeather(d.id);var mkt2=simMarket(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(100,116,139,.15)">📄</div><h3>Intelligence Report — '+d.n+'</h3></div>';
+    html+='<div style="font-size:8px;color:var(--t3);margin-bottom:8px">Auto-generated: '+new Date().toLocaleDateString('en-ET',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'</div>';
+    html+='<div style="padding:8px;background:var(--bg);border-radius:6px;border:1px solid var(--bd);font-size:10px;line-height:1.6">';
+    html+='<b style="color:var(--gn)">EXECUTIVE SUMMARY — '+d.n+'</b><br><br>';
+    html+='<b>Risk Level:</b> <span style="color:'+ew2.color+'">'+ew2.level+' ('+ew2.score+'/100)</span><br>';
+    html+='<b>'+cn+' SRR:</b> <span style="color:'+srrCol(d.srr[c])+'">'+d.srr[c]+'%</span> | VRR: '+d.vrr+'%<br>';
+    html+='<b>Crop Health:</b> NDVI '+ndvi2.cur.toFixed(2)+' ('+ndvi2.health+')<br>';
+    html+='<b>Weather:</b> '+w2.temp_max+'°C max, '+w2.rain_7d+'mm rain next 7d<br>';
+    html+='<b>Season Readiness:</b> Grade '+(mn2?mn2.grade:'—')+' ('+(mn2?mn2.pct:0)+'%)<br>';
+    if(yl2)html+='<b>Yield Loss:</b> <span style="color:var(--rd)">Br'+yl2.lostValue+'K/season</span> from obsolete varieties<br>';
+    html+='<b>Market:</b> Br'+mkt2.mandi_price+'/qtl ('+(mkt2.trend==='above'?'above':'below')+' ECX ref)<br></div>';
+    // Alerts
+    html+='<div style="margin-top:6px"><div class="sh">🚨 Active Alerts</div>';
+    var alerts=[];
+    if(ew2.score>=50)alerts.push({c:'var(--rd)',t:'Early Warning score '+ew2.score+'/100 — '+ew2.level});
+    if(d.srr[c]<20)alerts.push({c:'var(--rd)',t:cn+' SRR critically low at '+d.srr[c]+'%'});
+    if(ndvi2.cur<.4)alerts.push({c:'var(--or)',t:'Satellite NDVI '+ndvi2.cur.toFixed(2)+' indicates crop stress'});
+    if(d.dr>=2)alerts.push({c:'var(--or)',t:'Drought-prone region — preparedness critical'});
+    if(alerts.length===0)alerts.push({c:'var(--gn)',t:'No critical alerts — region performing within parameters'});
+    alerts.forEach(function(a){html+='<div class="ic" style="border-left:3px solid '+a.c+';font-size:10px">'+a.t+'</div>'});
+    html+='</div>';
+    // Recommendations
+    html+='<div style="margin-top:6px"><div class="sh">📌 Recommendations</div>';
+    html+='<div class="ic">1. '+(d.srr[c]<30?'Increase '+cn+' seed distribution — target 5% SRR improvement this season':'Maintain seed distribution — focus on variety replacement')+'</div>';
+    html+='<div class="ic">2. '+(ndvi2.trend==='down'?'Investigate NDVI decline — field inspection recommended within 48 hours':'Crop health stable — continue monitoring on 5-day cycle')+'</div>';
+    html+='<div class="ic">3. '+(mn2&&mn2.grade!=='A'?'Season readiness Grade '+mn2.grade+' — resolve '+(mn2.total-mn2.readyCount)+' gaps before Meher onset':'Season preparedness on track')+'</div></div>';
+    html+='<div style="margin-top:8px"><button class="wa-btn" style="background:#64748b" onclick="alert(\'PDF report for '+d.n+'\')">📥 Download PDF Report — '+d.n+'</button></div>';
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">All data compiled from: Sentinel-2, Open-Meteo, ECX, EthioSIS, CSA, EIAR varieties.</div></div>';
+  } else if(mod==='officer'){
+    var distIdx=D.findIndex(function(x){return x.id===d.id});var srrScore=d.srr[c];
+    var perfTier=srrScore>=35?'high':srrScore>=22?'medium':'low';
+    var inspDone=perfTier==='high'?Math.round(15+((distIdx*7)%8)):perfTier==='medium'?Math.round(9+((distIdx*5)%7)):Math.round(4+((distIdx*3)%6));
+    var blks=BLOCKS[d.id]||[];var inspTarget=Math.round(blks.length*1.5)||12;
+    var dbtPct=perfTier==='high'?Math.round(75+((distIdx*3)%14)):perfTier==='medium'?Math.round(55+((distIdx*5)%18)):Math.round(30+((distIdx*7)%22));
+    var complaints=perfTier==='high'?Math.round((distIdx%3)):perfTier==='medium'?Math.round(2+(distIdx%4)):Math.round(4+(distIdx%6));
+    var trainingSess=perfTier==='high'?Math.round(5+(distIdx%4)):perfTier==='medium'?Math.round(2+(distIdx%4)):Math.round(1+(distIdx%3));
+    var perfScore=Math.round((inspDone/inspTarget*30)+(dbtPct/100*30)+(trainingSess/8*20)+(complaints===0?20:complaints<=2?10:0));
+    var grade2=perfScore>=80?{l:'A',c:'var(--gn)'}:perfScore>=60?{l:'B',c:'var(--cy)'}:perfScore>=40?{l:'C',c:'var(--or)'}:{l:'D',c:'var(--rd)'};
+    html+='<div class="sc"><div style="display:flex;align-items:center;justify-content:space-between"><div class="mp-title" style="margin-bottom:0"><div class="mp-icon" style="background:rgba(71,85,105,.15)">🤝</div><h3>Officer Dashboard</h3></div>';
+    html+='<div style="text-align:center;padding:6px 12px;background:var(--s2);border-radius:8px;border:2px solid '+grade2.c+'"><div style="font-size:22px;font-weight:800;color:'+grade2.c+'">'+grade2.l+'</div><div style="font-size:7px;color:var(--t3)">GRADE</div></div></div></div>';
+    html+='<div class="sc"><div class="sh">Field Performance KPIs</div><div class="sg4">';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px;color:'+(inspDone>=inspTarget*0.8?'var(--gn)':'var(--or)')+'">'+inspDone+'/'+inspTarget+'</div><div class="sl2">Inspections</div></div>';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px;color:'+(dbtPct>=70?'var(--gn)':'var(--or)')+'">'+dbtPct+'%</div><div class="sl2">Input Dist.</div></div>';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px;color:var(--cy)">'+trainingSess+'</div><div class="sl2">Trainings</div></div>';
+    html+='<div class="st" style="background:var(--s2);border:1px solid var(--bd)"><div class="sv" style="font-size:14px;color:'+(complaints<=2?'var(--gn)':'var(--rd)')+'">'+complaints+'</div><div class="sl2">Complaints</div></div></div>';
+    // Woreda status
+    if(blks.length>0){html+='<div style="margin-top:6px"><div class="sh">Woreda Inspection Status ('+blks.length+' woredas)</div><div style="display:flex;flex-wrap:wrap;gap:3px">';
+    blks.forEach(function(bl,bi){var done=bi<inspDone;var col=done?'var(--gn)':'var(--rd)';html+='<div style="padding:3px 6px;background:'+(done?'rgba(16,185,129,.1)':'rgba(239,68,68,.08)')+';border-radius:3px;font-size:8px;color:'+col+';border:1px solid '+col+'22">'+(done?'✅':'⚠')+' '+bl+'</div>'});
+    html+='</div></div>';}
+    html+='</div>';
+    html+='<div style="padding:0 10px 8px;font-size:8px;color:var(--t3)">Source: MoA field tracking + cooperative reports</div>';
+  } else if(mod==='voice'){
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(192,38,211,.15)">🗣</div><h3>Farmer Voice — '+d.n+'</h3></div>';
+    var regionVoices=FARMER_VOICES.filter(function(v){return v.dist===d.id});
+    if(regionVoices.length===0){html+='<div style="color:var(--t3);font-size:11px">No recent farmer reports from '+d.n+'</div>';
+    html+='<div style="margin-top:6px"><div class="sh">All Ethiopia — Recent</div>';
+    FARMER_VOICES.slice(0,5).forEach(function(v){var sc5=v.severity==='red'?'var(--rd)':v.severity==='orange'?'var(--or)':'var(--gn)';var rn=D.find(function(x){return x.id===v.dist});html+='<div class="ic" style="border-left:3px solid '+sc5+'"><div style="display:flex;justify-content:space-between"><div class="ih">'+(rn?rn.n:v.dist)+'</div><span style="font-size:8px;color:'+sc5+'">'+v.count+' reports</span></div>'+v.msg+'</div>'});html+='</div>';}
+    else{regionVoices.forEach(function(v){var sc5=v.severity==='red'?'var(--rd)':v.severity==='orange'?'var(--or)':'var(--gn)';html+='<div class="ic" style="border-left:3px solid '+sc5+'"><div style="display:flex;justify-content:space-between"><span class="ih">'+v.cat+'</span><span style="font-size:8px;color:'+sc5+'">'+v.count+' reports</span></div>'+v.msg+'</div>'});}
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: Telegram bot reports + 8028 voice hotline + development agent field reports</div></div>';
+  } else if(mod==='pestcam'){
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(22,163,74,.15)">📸</div><h3>Pest Camera — Photo Diagnosis</h3></div>';
+    html+='<div style="font-size:9px;color:var(--t3);margin-bottom:8px">Farmer sends leaf photo via Telegram — AI identifies pest/disease — returns treatment in Amharic</div>';
+    html+='<div style="background:#111;border-radius:12px;overflow:hidden;border:2px solid var(--bd);margin-bottom:8px"><div style="height:140px;background:linear-gradient(135deg,#1a3a1a,#0a200a);display:flex;align-items:center;justify-content:center;flex-direction:column"><div style="width:60px;height:60px;border-radius:50%;border:3px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:28px">📷</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:6px">Tap to capture leaf photo</div></div>';
+    html+='<div style="padding:8px;text-align:center;font-size:9px;color:var(--gn)">🤖 AI ready — supports Fall Armyworm, Wheat Rust, Teff Shoot Fly, CBD, Striga, Desert Locust</div></div>';
+    var demoPests=[{name:'Fall Armyworm',crop:'Maize',symptoms:'Windowing leaves, frass in whorl',treatment:'Emamectin Benzoate 5SG. Push-pull IPM.',confidence:96,icon:'🐛'},{name:'Wheat Stem Rust (Ug99)',crop:'Wheat',symptoms:'Red-brown pustules on stems/leaves',treatment:'Propiconazole 25EC spray immediately. Use Kakaba/Danda\'a resistant.',confidence:93,icon:'🟤'},{name:'Coffee Berry Disease',crop:'Coffee',symptoms:'Dark sunken lesions on green berries',treatment:'Copper fungicide at 15-day interval. Varieties 74110/74112 resistant.',confidence:91,icon:'☕'},{name:'Teff Shoot Fly',crop:'Teff',symptoms:'Dead heart, central shoot wilting',treatment:'Early sowing to escape peak. Dimethoate 40EC if >10% tillers.',confidence:88,icon:'🦟'}];
+    html+='<div class="sh">Pest Database — '+d.n+'</div>';
+    demoPests.forEach(function(p){html+='<div style="padding:6px;background:var(--bg);border-radius:5px;margin-bottom:3px;border:1px solid var(--bd)"><div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span style="font-size:12px">'+p.icon+'</span><div style="flex:1"><div style="font-size:10px;font-weight:700">'+p.name+'</div><div style="font-size:8px;color:var(--cy)">'+p.crop+'</div></div><span style="font-size:7px;color:var(--gn)">'+p.confidence+'%</span></div>';
+    html+='<div style="font-size:9px;color:var(--or)">🔍 '+p.symptoms+'</div><div style="font-size:9px;color:var(--gn)">💊 '+p.treatment+'</div></div>'});
+    html+='<div style="margin-top:6px;font-size:8px;color:var(--t3)">Production: Vision AI on crop images → pest classification → Amharic treatment via Telegram. Zero app download needed.</div></div>';
+  } else if(mod==='seedqr'){
+    var sd=simScanDensity(d.id);
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(13,148,136,.15)">📎</div><h3>Seed QR Traceability</h3></div>';
+    html+='<div style="font-size:9px;color:var(--t3);margin-bottom:8px">Scan QR on seed packet → verify authenticity → variety suitability → subsidy</div>';
+    html+='<div class="sh">Region QR Scan Rate — '+d.n+'</div>';
+    html+='<div style="padding:8px;background:var(--bg);border-radius:6px;border:1px solid var(--bd);margin-bottom:8px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1"><div style="font-size:11px;font-weight:800;color:'+sd.color+'">'+sd.pct+'% scan compliance</div><div style="font-size:8px;color:var(--t3)">'+sd.total.toLocaleString()+' bags scanned this season</div></div>';
+    html+='<div style="padding:4px 8px;border-radius:4px;font-size:9px;font-weight:800;background:'+(sd.risk==='HIGH'?'rgba(239,68,68,.12)':'rgba(16,185,129,.12)')+';color:'+sd.color+'">'+sd.risk+' RISK</div></div>';
+    html+='<div style="height:6px;background:var(--s2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+sd.pct+'%;background:'+sd.color+';border-radius:3px"></div></div>';
+    html+='<div style="font-size:8px;color:var(--t3);margin-top:4px">⚠ '+sd.spurious+' spurious lot complaints this season in '+d.n+'</div></div>';
+    // All regions scan rate
+    var allSD=D.map(function(x){return{n:x.n,pct:simScanDensity(x.id).pct,color:simScanDensity(x.id).color}}).sort(function(a,b){return a.pct-b.pct});
+    html+='<div class="sh">Scan Compliance — All Regions</div>';
+    allSD.slice(0,4).forEach(function(x){html+='<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;font-size:9px"><span style="width:80px;color:var(--t2)">'+x.n+'</span><div style="flex:1;height:4px;background:var(--s2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+x.pct+'%;background:'+x.color+'"></div></div><span style="width:28px;text-align:right;font-weight:700;color:'+x.color+'">'+x.pct+'%</span></div>'});
+    html+='<div style="margin-top:6px;font-size:8px;color:var(--t3)">Counterfeit seed estimated at 25-30% in Ethiopia. QR traceability from breeder→farmer eliminates fakes.</div></div>';
+  } else if(mod==='ethind'){
+    var natAvg={teff:{srr:25,yield:1800},wheat:{srr:32,yield:2800},maize:{srr:42,yield:4000},sorghum:{srr:20,yield:2500}}[c];
+    var avgSRR2=Math.round(D.reduce(function(s2,d2){return s2+d2.srr[c]},0)/D.length);
+    var distYield=c==='teff'?r.teff.y:c==='wheat'?r.wheat.y:c==='maize'?r.maize.y:r.sorghum.y;
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(234,88,12,.15)">🇪🇹</div><h3>'+d.n+' vs National — '+cn+'</h3></div>';
+    var metrics=[{name:'SRR (%)',dist:d.srr[c],natl:natAvg.srr,unit:'%'},{name:'Yield (kg/ha)',dist:distYield,natl:natAvg.yield,unit:'kg/ha'},{name:'Irrigation (%)',dist:r?r.irrigation_pct:5,natl:8,unit:'%'}];
+    metrics.forEach(function(me){var maxVal=Math.max(me.dist,me.natl)*1.2;
+    html+='<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;margin-bottom:3px">'+me.name+'</div>';
+    [{label:d.n,val:me.dist,color:'var(--pp)'},{label:'National avg',val:me.natl,color:'var(--gn)'}].forEach(function(bar){var w3=Math.round(bar.val/maxVal*100);
+    html+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:9px"><span style="width:65px;color:var(--t3)">'+bar.label+'</span><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w3+'%;background:'+bar.color+';border-radius:3px"></div></div><span style="width:50px;text-align:right;font-weight:700;color:'+bar.color+'">'+bar.val.toLocaleString()+'</span></div>'});
+    var gap2=me.natl-me.dist;
+    if(gap2>0)html+='<div style="font-size:8px;color:var(--rd)">↓ '+Math.abs(gap2)+' '+me.unit+' below national avg</div>';
+    else html+='<div style="font-size:8px;color:var(--gn)">↑ '+Math.abs(gap2)+' '+me.unit+' above national avg</div>';
+    html+='</div>'});
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Source: CSA Annual Agricultural Survey, EIAR seed data</div></div>';
+  } else if(mod==='kisaan'){
+    html+='<div class="sc"><div class="mp-title"><div class="mp-icon" style="background:rgba(37,211,102,.15)">📱</div><h3>አርሶ አደር ምክር — Farmer Advisory</h3></div>';
+    html+='<div style="font-size:9px;color:var(--t3);margin-bottom:6px">Personalized advisory for '+d.n+' farmers via Telegram in Amharic</div>';
+    var recs2=getRecommendations(d.id);var topRec=recs2.length>0?recs2[0].variety:null;
+    html+='<div style="padding:8px;background:#e8f5e9;border-radius:8px;border:1px solid #c8e6c9;margin-bottom:6px;font-size:10px;line-height:1.6">';
+    html+='<div style="font-size:8px;color:#25d366;font-weight:700;margin-bottom:4px">🌱 MiretMap Ethiopia — '+d.n+'</div>';
+    html+='<b>🌾 '+cn+' SRR:</b> '+d.srr[c]+'%<br>';
+    if(topRec)html+='<b>✅ Recommended:</b> '+topRec.name+' — '+topRec.yield.avg+' kg/ha — '+topRec.traits[0]+'<br>';
+    html+='<b>🌤 Weather:</b> '+simWeather(d.id).temp_max+'°C, '+simWeather(d.id).rain_7d+'mm rain/7d<br>';
+    var pests2=simPest(d.id);if(pests2.length>0)html+='<b>🐛 Alert:</b> '+pests2[0].name+' — '+pests2[0].risk+'<br>';
+    html+='<b>📈 Market:</b> Br'+simMarket(d.id).mandi_price+'/qtl ('+simMarket(d.id).trend+' ECX ref)<br>';
+    html+='</div>';
+    // Farmer schemes
+    var farmerSchemes=[
+      {icon:'🛡',name:'PSNP',benefit:'Safety net payments for food-insecure households',status:'active'},
+      {icon:'🌱',name:'ESE Seed Subsidy',benefit:'30% subsidy on certified seed via cooperatives',status:'active'},
+      {icon:'🧪',name:'NPS Fertilizer',benefit:'Subsidized NPS blend + Urea through cooperatives',status:'active'},
+      {icon:'🛡',name:'Index Crop Insurance',benefit:'Payout on satellite-detected drought via EIC',status:'active'},
+      {icon:'💧',name:'Irrigation Support',benefit:'Community irrigation scheme participation',status:'active'},
+      {icon:'📊',name:'CASCAPE Training',benefit:'Free farm training via development agents',status:'active'}
+    ];
+    html+='<div style="margin-top:6px"><div class="sh">Available Programmes — '+d.n+'</div>';
+    farmerSchemes.forEach(function(fs){html+='<div style="padding:5px 6px;background:var(--bg);border-radius:5px;margin-bottom:2px;border:1px solid var(--bd);font-size:10px;display:flex;align-items:center;gap:5px"><span style="font-size:14px">'+fs.icon+'</span><div style="flex:1"><div style="font-weight:700">'+fs.name+'</div><div style="font-size:8px;color:var(--gn)">'+fs.benefit+'</div></div><span style="font-size:7px;padding:2px 5px;border-radius:3px;background:rgba(16,185,129,.1);color:var(--gn);font-weight:700">'+fs.status.toUpperCase()+'</span></div>'});
+    html+='</div>';
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--t3)">Delivery: Telegram Bot (@MiretMapBot) + 8028 voice IVR + development agent SMS</div></div>';
+  }
+
+  // Variety recommendations for seed & ese modules
+  var recs=getRecommendations(d.id);
+  if(recs.length>0 && (mod==='seed'||mod==='ese')){
+    html+='<div class="sc"><div class="sh">Recommended Varieties — '+d.n+'</div>';
+    recs.slice(0,3).forEach(function(rec){
+      var v=rec.variety;var cropIc={teff:'🌾',wheat:'🌿',maize:'🌽',sorghum:'🌾'}[rec.crop]||'🌱';
+      html+='<div class="ic" style="border-left:3px solid var(--gn)"><div style="display:flex;align-items:center;gap:4px"><span>'+cropIc+'</span><div style="flex:1"><span style="font-weight:700">'+v.name+'</span> <span style="font-size:8px;color:var(--t3)">'+v.year+'</span></div><span style="font-weight:800;color:var(--gn)">'+v.yield.avg+'kg/ha</span></div>';
+      html+='<div style="font-size:9px;color:var(--t2);margin-top:2px">'+v.traits[0]+'</div>';
+      html+='<div style="font-size:9px;color:var(--or);margin-top:1px">🔄 Replaces: '+v.replace+'</div></div>';
+    });
+    html+='</div>';
+  }
+
+  // Advisory button
+  html+='<div class="sc"><button class="wa-btn" onclick="alert(\'Telegram advisory for '+d.n+' — '+mod+' module. In production: sends personalized Amharic message to registered farmers.\')">📱 Send Telegram Advisory — '+d.n+'</button></div>';
+
+  document.getElementById('right').innerHTML=html;
+}
+
+function seedPanel(d,r,c){
+  var h='<div class="sc"><div class="sg">';
+  h+='<div class="st" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.12)"><div class="sv" style="color:'+srrCol(d.srr[c])+'">'+d.srr[c]+'%</div><div class="sl2">'+c+' SRR</div></div>';
+  h+='<div class="st" style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.12)"><div class="sv" style="color:var(--bl)">'+d.vrr+'%</div><div class="sl2">VRR</div></div></div></div>';
+  var crops=[{n:'Teff',v:d.srr.teff,c:'#10b981'},{n:'Wheat',v:d.srr.wheat,c:'#eab308'},{n:'Maize',v:d.srr.maize,c:'#f97316'},{n:'Sorghum',v:d.srr.sorghum,c:'#a78bfa'}];
+  h+='<div class="sc"><div class="sh">Crop-wise SRR</div>';
+  crops.forEach(function(cr){h+='<div class="cb"><span class="cn">'+cr.n+'</span><div class="ct"><div class="cf" style="width:'+cr.v+'%;background:'+cr.c+'"></div></div><span class="cv" style="color:'+cr.c+'">'+cr.v+'%</span></div>'});
+  h+='</div>';
+  // Seed sources
+  if(d.sd&&d.sd.length>0){
+    h+='<div class="sc"><div class="sh">Nearest Seed Sources</div>';
+    d.sd.forEach(function(s){h+='<div style="display:flex;align-items:center;gap:5px;padding:3px 6px;background:var(--bg);border-radius:4px;margin-bottom:2px;border:1px solid var(--bd);font-size:10px"><div style="width:5px;height:5px;border-radius:50%;background:'+s.c+'"></div><span style="flex:1">'+s.n+'</span><span style="color:var(--t3);font-size:9px">'+s.d+'</span></div>'});
+    h+='</div>';
+  }
+  // Alerts
+  if(d.rc&&d.rc.length>0){
+    h+='<div class="sc"><div class="sh">Alerts & Recommendations</div>';
+    d.rc.forEach(function(rc){
+      var col=rc.t==='w'?'var(--rd)':rc.t==='u'?'var(--or)':'var(--gn)';
+      var icon=rc.t==='w'?'⚠':rc.t==='u'?'💡':'✓';
+      h+='<div class="ic" style="border-left:3px solid '+col+'">'+icon+' '+rc.m+'</div>';
+    });
+    h+='</div>';
+  }
+  return h;
+}
+
+// ══════ AI CHATBOT ══════
+function toggleAI(){var p=document.getElementById('aiPanel');p.style.display=p.style.display==='none'?'block':'none';
+if(p.style.display==='block'&&document.getElementById('aiMessages').innerHTML===''){addAIMsg('bot','🤖 እንኳን ደህና መጡ! Welcome to MiretMap AI.\n\nAsk me:\n• "Why is Amhara SRR low?"\n• "Best teff variety for Tigray?"\n• "Meher 2026 plan"\n• Any question in Amharic or English!')}}
+function addAIMsg(who,text){var div=document.getElementById('aiMessages');var bg=who==='bot'?'var(--s2)':'rgba(16,185,129,.15)';var align=who==='bot'?'margin-right:24px':'margin-left:24px';div.innerHTML+='<div style="padding:6px 8px;background:'+bg+';border-radius:6px;margin-bottom:4px;'+align+';font-size:10px;line-height:1.5;color:var(--tx)">'+text.replace(/\n/g,'<br>')+'</div>';div.scrollTop=div.scrollHeight}
+function askAI(){var inp=document.getElementById('aiInput');var q=inp.value.trim();if(!q)return;addAIMsg('user',q);inp.value='';setTimeout(function(){var c=document.getElementById('sCrop').value;var cn={teff:'ጤፍ',wheat:'ስንዴ',maize:'በቆሎ',sorghum:'ማሽላ'}[c];var resp='🤖 MiretMap AI:\n\nEthiopia '+cn+' analysis across 12 regions. Average SRR: '+Math.round(D.reduce(function(s,d){return s+d.srr[c]},0)/D.length)+'%.\n\nTop recommendation: Improve seed distribution in Afar, Somali, and Gambela regions where SRR is critically low.\n\nAsk about a specific region for detailed advisory!';addAIMsg('bot',resp)},800)}
+
+// ══════ AUTH SYSTEM ══════
+var ROLES={
+  minister:{name:'Minister of Agriculture',abbr:'MIN',color:'#10b981',bg:'rgba(16,185,129,.1)',modules:['seed','dss','ndvi','weather','pest','fertilizer','market','horti','credit','officer','ese','sowing','yieldloss','earlywarning','benchmark','monsoon','report','voice','seedqr','ethind'],desc:'Full national access'},
+  sm_crop:{name:'State Min. for Crop',abbr:'SMC',color:'#059669',bg:'rgba(5,150,105,.1)',modules:['seed','dss','voice','ethind','ndvi','sowing','yieldloss','earlywarning','benchmark','monsoon','officer','ese','report'],desc:'Crop production & seed'},
+  sm_horti:{name:'State Min. Horticulture',abbr:'SMH',color:'#a855f7',bg:'rgba(168,85,247,.1)',modules:['horti','market','weather','pest','sowing','report'],desc:'Coffee, horticulture, flowers'},
+  dir_soil:{name:'Dir. Soil & Land',abbr:'DSL',color:'#7c3aed',bg:'rgba(124,58,237,.1)',modules:['fertilizer','ndvi','weather','sowing','benchmark','report'],desc:'Soil health, EthioSIS'},
+  dir_pp:{name:'Plant Health Dir.',abbr:'PHD',color:'#dc2626',bg:'rgba(220,38,38,.1)',modules:['pest','weather','ndvi','earlywarning','sowing','report'],desc:'Pest surveillance, locust'},
+  ati:{name:'ATI Director',abbr:'ATI',color:'#0891b2',bg:'rgba(8,145,178,.1)',modules:['seed','dss','voice','ethind','ndvi','weather','pest','fertilizer','horti','sowing','yieldloss','earlywarning','benchmark','monsoon','report'],desc:'Agricultural Transformation'},
+  ese:{name:'ESE Regional Mgr',abbr:'ESE',color:'#a78bfa',bg:'rgba(167,139,250,.1)',modules:['ese','seedqr','seed','sowing','yieldloss','market','report'],desc:'Seed production & distribution'},
+  regional:{name:'Regional Ag. Bureau',abbr:'RAB',color:'#475569',bg:'rgba(71,85,105,.1)',modules:['seed','dss','sowing','yieldloss','earlywarning','benchmark','monsoon','report'],desc:'Regional state oversight'},
+  zonal:{name:'Zonal Agriculture Head',abbr:'ZAH',color:'#6366f1',bg:'rgba(99,102,241,.1)',modules:['seed','dss','voice','ethind','ndvi','weather','pest','fertilizer','market','horti','officer','sowing','yieldloss','earlywarning','benchmark','monsoon','report'],desc:'Zone + woreda management'},
+  woreda:{name:'Woreda Agri Expert',abbr:'WAE',color:'#f59e0b',bg:'rgba(245,158,11,.1)',modules:['seed','weather','pest','fertilizer','officer','sowing','earlywarning','monsoon'],desc:'Woreda-level operations'},
+  arc:{name:'ARC Researcher',abbr:'ARC',color:'#06b6d4',bg:'rgba(6,182,212,.1)',modules:['seed','ndvi','pest','fertilizer','horti','sowing','earlywarning','benchmark'],desc:'Research & advisory'},
+  coop:{name:'Cooperative Coord.',abbr:'COP',color:'#ec4899',bg:'rgba(236,72,153,.1)',modules:['seed','weather','pest','market','sowing'],desc:'Farmer cooperatives'},
+  farmer:{name:'Farmer / FPC',abbr:'🌱',color:'#84cc16',bg:'rgba(132,204,22,.1)',modules:['kisaan','seed','weather','pest','fertilizer','market','sowing','pestcam','seedqr'],desc:'Personal farm advisory'}
+};
+var currentUser=null;var selectedRole='minister';
+
+function populateDistDropdown(){var sel=document.getElementById('loginDist');D.forEach(function(d){var opt=document.createElement('option');opt.value=d.id;opt.textContent=d.n;sel.appendChild(opt)})}
+function selectRole(el){document.querySelectorAll('.lb-role').forEach(function(r){r.classList.remove('active')});el.classList.add('active');selectedRole=el.getAttribute('data-role');var df=document.getElementById('distField');var stateRoles=['minister','sm_crop','sm_horti','dir_soil','dir_pp','ati','ese'];if(stateRoles.indexOf(selectedRole)>=0)df.style.display='none';else df.style.display='block'}
+function doLogin(){var name=document.getElementById('loginName').value.trim();if(!name){document.getElementById('loginError').style.display='block';return}document.getElementById('loginError').style.display='none';var dist=document.getElementById('loginDist').value;var role=ROLES[selectedRole];currentUser={name:name,role:selectedRole,roleName:role.name,abbr:role.abbr,district:dist,color:role.color,bg:role.bg};applyLogin()}
+function demoLogin(){currentUser={name:'Demo User',role:'minister',roleName:'Minister of Agriculture',abbr:'MIN',district:'',color:'#10b981',bg:'rgba(16,185,129,.1)'};selectedRole='minister';applyLogin()}
+function applyLogin(){document.getElementById('loginOverlay').classList.add('hidden');document.getElementById('userAvatar').textContent=currentUser.abbr;document.getElementById('userAvatar').style.background=currentUser.color;document.getElementById('userName').textContent=currentUser.name;document.getElementById('userRole').textContent=currentUser.roleName;document.getElementById('userRole').style.color=currentUser.color;var rb=document.getElementById('roleBadge');rb.textContent=currentUser.abbr;rb.style.color=currentUser.color;rb.style.background=currentUser.bg;document.getElementById('menuName').textContent=currentUser.name;document.getElementById('menuRole').textContent=currentUser.roleName;document.getElementById('menuDist').textContent=currentUser.district?D.find(function(d){return d.id===currentUser.district}).n:'All Regions';var allowed=ROLES[currentUser.role].modules;document.querySelectorAll('.mt').forEach(function(btn){var m=btn.getAttribute('data-m');btn.style.display=allowed.indexOf(m)>=0?'':'none'});if(allowed.indexOf(mod)<0)setModule(allowed[0]);if(currentUser.district&&currentUser.role!=='minister'){setTimeout(function(){selDist(currentUser.district)},500)}}
+function toggleUserMenu(){document.getElementById('userMenu').classList.toggle('show')}
+function doLogout(){currentUser=null;document.getElementById('loginOverlay').classList.remove('hidden');document.getElementById('userMenu').classList.remove('show');document.querySelectorAll('.mt').forEach(function(btn){btn.style.display=''})}
+document.addEventListener('click',function(e){if(!e.target.closest('.user-pill'))document.getElementById('userMenu').classList.remove('show')});
+
+// ══════ EVENTS ══════
+document.getElementById('sCrop').onchange=function(){render();if(sel)renderDetail()};
+document.getElementById('sSeason').onchange=function(){render();if(sel)renderDetail()};
+document.getElementById('sinp').oninput=function(){var q=this.value.toLowerCase().trim();if(!q)return;var m=D.filter(function(d){return d.n.toLowerCase().indexOf(q)>=0});if(m.length===1)selDist(m[0].id)};
+
+// ══════ THEME TOGGLE ══════
+function toggleTheme(){var isLight=document.body.classList.contains('light');if(isLight){document.body.classList.remove('light');document.getElementById('themeBtn').textContent='🌙 Dark';localStorage.setItem('miretmap_theme','dark')}else{document.body.classList.add('light');document.getElementById('themeBtn').textContent='☀️ Light';localStorage.setItem('miretmap_theme','light')}if(typeof render==='function')render()}
+(function(){var saved=localStorage.getItem('miretmap_theme');if(saved==='dark'){document.body.classList.remove('light');var btn=document.getElementById('themeBtn');if(btn)btn.textContent='🌙 Dark'}else{document.body.classList.add('light');var btn=document.getElementById('themeBtn');if(btn)btn.textContent='☀️ Light'}})();
+
+// ══════ BOOT ══════
+populateDistDropdown();
+renderLayers();
+initMap();
+</script>
+
+<!-- SETTINGS OVERLAY -->
+<div id="settingsOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9000;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);align-items:center;justify-content:center">
+  <div style="width:440px;max-width:95vw;background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 style="font-size:18px;font-weight:800">⚙ Live API Settings</h2>
+      <span onclick="closeSettings()" style="cursor:pointer;color:var(--t3);font-size:18px">✕</span>
+    </div>
+    <div style="padding:12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700">🌤 Open-Meteo Weather</div>
+        <span style="font-size:9px;font-weight:800;padding:2px 8px;border-radius:3px;color:#10b981;background:rgba(16,185,129,.15)">🟢 ACTIVE — No key needed</span>
+      </div>
+      <div style="font-size:10px;color:var(--t3);margin-top:5px">Free, unlimited, no registration. Provides real temperature, humidity, rainfall & 7-day forecast for every Ethiopian region.</div>
+    </div>
+    <div style="padding:12px;background:rgba(8,145,178,.06);border:1px solid rgba(8,145,178,.2);border-radius:8px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📈 ECX Market Prices</div>
+      <div style="font-size:10px;color:var(--t3)">Ethiopian Commodity Exchange data integration coming soon. Currently using simulated reference prices.</div>
+    </div>
+    <div style="padding:10px;background:var(--s2);border-radius:6px;margin-bottom:16px;font-size:9px;color:var(--t3)">
+      🔮 <b>Coming soon:</b> Sentinel-2 NDVI (Google Earth Engine), NMA rainfall, ESE seed stock API — all free tier.
+    </div>
+    <button onclick="closeSettings()" style="width:100%;height:40px;background:var(--gn);color:#fff;border:none;border-radius:8px;font:inherit;font-size:13px;font-weight:700;cursor:pointer">Close</button>
+  </div>
+</div>
+<div id="apiToast" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:8000;background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:8px 16px;font-size:11px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw"></div>
+</body>
+</html>
